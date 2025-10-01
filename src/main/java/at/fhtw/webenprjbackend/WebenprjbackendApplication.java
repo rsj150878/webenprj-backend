@@ -1,4 +1,4 @@
-package com.example.webenprjbackend;
+package at.fhtw.webenprjbackend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
