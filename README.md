@@ -5,7 +5,7 @@ It’s like a learning diary that helps students stay motivated and connect with
 
 ---
 
-# 🌟 Main Idea
+## 🌟 Main Idea
 Students can post short “micro-blog” updates about what they studied today.
 Each post can include:
 - text about what they did
