@@ -1,6 +1,6 @@
-# 🎓 FocusFlow – Study Micro-Blogging Platform (Backend)
+# 🎓 Motivise – Study Micro-Blogging Platform (Backend)
 
-FocusFlow is a small social platform where students can share short learning updates, daily progress, motivation, and study tips.
+Motivise is a small social platform where students can share short learning updates, daily progress, motivation, and study tips.
 It’s like a learning diary that helps students stay motivated and connect with others who are also studying.
 
 ---
