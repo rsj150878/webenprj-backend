@@ -1,12 +1,12 @@
 # 🎓 Motivise – Study Micro-Blogging Platform (Backend)
 
 Motivise is a small social platform where students can share short learning updates, daily progress, motivation, and study tips.
-It’s like a learning diary that helps students stay motivated and connect with others who are also studying.
+It's like a learning diary that helps students stay motivated and connect with others who are also studying.
 
 ---
 
 ## 🌟 Main Idea
-Students can post short “micro-blog” updates about what they studied today.
+Students can post short "micro-blog" updates about what they studied today.
 Each post can include:
 - text about what they did
 - images of notes or whiteboards
@@ -14,6 +14,68 @@ Each post can include:
 - study tags (e.g., #math, #marketing)
 
 Other students can like or comment on posts.
-Optional “study streaks” show how many days in a row a user has been learning.
+Optional "study streaks" show how many days in a row a user has been learning.
 
 ---
+
+## 🚀 Quick Setup Guide
+
+### Prerequisites
+- **Docker Desktop** installed and running
+- **Java 21** (included in VS Code Java Extension Pack)
+- **Git** for cloning the repository
+
+### 🐳 Start the Application
+
+```bash
+# 1. Clone the repository
+git clone <your-repo-url>
+cd webenprj-backend
+
+# 2. Start database services
+docker-compose up -d mysql
+
+# 3. Wait for MySQL to be ready (about 30 seconds)
+# You can check with: docker-compose logs mysql
+
+# 4. Start Spring Boot application
+./mvnw spring-boot:run
+# On Windows: mvnw.cmd spring-boot:run
+```
+
+### 🌐 Access the Application
+
+- **API Endpoints**: http://localhost:8080
+- **Health Check**: http://localhost:8080/status
+- **phpMyAdmin** (Database UI): http://localhost:8080 (wait, this conflicts with Spring Boot!)
+
+### 🛠️ Development URLs
+
+Once running, you can access:
+- **Spring Boot App**: http://localhost:8080
+- **Database Admin**: http://localhost:8080 (⚠️ Port conflict!)
+
+---
+
+## 🔧 Troubleshooting
+
+### Port 8080 Already in Use
+```bash
+# Stop phpMyAdmin if it's blocking Spring Boot
+docker-compose stop phpmyadmin
+
+# Or change Spring Boot port in application.properties:
+# server.port=8081
+```
+
+### Database Connection Issues
+```bash
+# Check if MySQL is running
+docker-compose ps
+
+# View MySQL logs
+docker-compose logs mysql
+
+# Restart database
+docker-compose restart mysql
+```
