@@ -32,7 +32,7 @@ Optional "study streaks" show how many days in a row a user has been learning.
 git clone https://github.com/rsj150878/webenprj-backend
 cd webenprj-backend
 
-# 2. Start database services
+# 2. Start database services ( / Have Docker running)
 docker-compose up -d mysql
 
 # 3. Wait for MySQL to be ready (about 30 seconds)
@@ -40,20 +40,14 @@ docker-compose up -d mysql
 
 # 4. Start Spring Boot application
 ./mvnw spring-boot:run
-# On Windows: mvnw.cmd spring-boot:run
 ```
 
 ### 🌐 Access the Application
 
 - **API Endpoints**: http://localhost:8081
-- **Health Check**: http://localhost:8081/status
+- **"Health Check"**: http://localhost:8081/status
+- **API Documentation (Swagger)**: http://localhost:8081/swagger-ui.html
 - **phpMyAdmin** (Database UI): http://localhost:8080
-
-### 🛠️ Development URLs
-
-Once running, you can access:
-- **Spring Boot App**: http://localhost:8081
-- **Database Admin**: http://localhost:8080
 
 ---
 
