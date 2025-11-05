@@ -20,7 +20,7 @@ RUN mvn clean package -DskipTests
 # ===============================
 # 🚀 Runtime Stage
 # ===============================
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Nur die gebaute JAR ins Runtime-Image übernehmen

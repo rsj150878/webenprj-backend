@@ -46,7 +46,7 @@ docker-compose up -d mysql
 
 - **API Endpoints**: http://localhost:8081
 - **"Health Check"**: http://localhost:8081/status
-- **API Documentation (Swagger)**: http://localhost:8081/swagger-ui.html
+- **API Documentation (Swagger)**: http://localhost:8081/swagger-ui/index.html
 - **phpMyAdmin** (Database UI): http://localhost:8080
 
 ---
