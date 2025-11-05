@@ -45,28 +45,19 @@ docker-compose up -d mysql
 
 ### 🌐 Access the Application
 
-- **API Endpoints**: http://localhost:8080
-- **Health Check**: http://localhost:8080/status
-- **phpMyAdmin** (Database UI): http://localhost:8080 (wait, this conflicts with Spring Boot!)
+- **API Endpoints**: http://localhost:8081
+- **Health Check**: http://localhost:8081/status
+- **phpMyAdmin** (Database UI): http://localhost:8080
 
 ### 🛠️ Development URLs
 
 Once running, you can access:
-- **Spring Boot App**: http://localhost:8080
-- **Database Admin**: http://localhost:8080 (⚠️ Port conflict!)
+- **Spring Boot App**: http://localhost:8081
+- **Database Admin**: http://localhost:8080
 
 ---
 
 ## 🔧 Troubleshooting
-
-### Port 8080 Already in Use
-```bash
-# Stop phpMyAdmin if it's blocking Spring Boot
-docker-compose stop phpmyadmin
-
-# Or change Spring Boot port in application.properties:
-# server.port=8081
-```
 
 ### Database Connection Issues
 ```bash
