@@ -1,7 +1,8 @@
 package at.fhtw.webenprjbackend.entity;
 // TODO: Consider switching to OffsetDateTime instead of LocalDateTime (storing timezone offset)
 // TODO: Consider adding status - publish visibility, DRAFT / PUBLISHED
-// TODO: Create a PostDto to avoid 'pver-posting'
+// TODO: Create a PostDto to avoid 'over-posting'
+// TODO: Validation NOT HERE!!! -> Controller!
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
