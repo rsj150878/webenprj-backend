@@ -29,7 +29,7 @@ Optional "study streaks" show how many days in a row a user has been learning.
 
 ```bash
 # 1. Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/rsj150878/webenprj-backend
 cd webenprj-backend
 
 # 2. Start database services
