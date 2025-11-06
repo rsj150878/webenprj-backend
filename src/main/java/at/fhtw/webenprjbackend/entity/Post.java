@@ -3,6 +3,7 @@ package at.fhtw.webenprjbackend.entity;
 // TODO: Consider adding status - publish visibility, DRAFT / PUBLISHED
 // TODO: Create a PostDto to avoid 'over-posting'
 // TODO: Validation NOT HERE!!! -> Controller!
+// TODO: Auditing (createdBy, modifiedBy) implementation
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
