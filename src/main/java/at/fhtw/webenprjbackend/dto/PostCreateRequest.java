@@ -1,0 +1,76 @@
+package at.fhtw.webenprjbackend.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import java.util.UUID;
+
+/**
+ * Request Data Transfer Object (DTO) for creating a new post.
+ * Used to receive post data from the frontend.
+ *
+ * Part of the Motivise study blogging platform backend.
+ *
+ * @author jasmin
+ * @version 0.1
+ */
+
+public class PostCreateRequest {
+
+    @NotBlank (message = "Subject is required")
+    @Pattern(
+            regexp = "^#?[A-Za-z0-9_-]{2,30}$",
+            message = "Subject must be 2-30 characters, can include letters/numbers/-/_; optional leading with a '#' symbol"
+    )
+    private String subject;
+
+    @NotBlank(message = "Content is required")
+    @Size(max = 500, message = "Content must not be longer than 500 characters")
+    private String content;
+
+    @Size(max = 500, message = "Image URL too long")
+    private String imageUrl;
+
+    /**
+     * For Milestone 1 we deliver userId in the request body
+     * - in future implementations this should be extracted from the JWT token
+     *
+     */
+    private UUID userId;
+
+
+    // ===============================
+    // Getters and Setters
+    // ===============================
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+}

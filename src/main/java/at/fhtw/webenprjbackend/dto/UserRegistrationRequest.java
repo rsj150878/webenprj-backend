@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 // TODO: Bycrypt password before storing in DB??
+// TODO: Add Salutation (Repeat Password)
 
 /**
  * Data Transfer Object (DTO) for user registration.

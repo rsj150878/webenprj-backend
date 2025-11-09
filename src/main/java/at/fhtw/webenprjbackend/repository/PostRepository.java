@@ -2,12 +2,14 @@ package at.fhtw.webenprjbackend.repository;
 
 import java.util.List;
 
+import at.fhtw.webenprjbackend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import at.fhtw.webenprjbackend.entity.Post;
+import java.util.UUID;
+
 
 /**
  * Repository interface for Post entity operations.
@@ -17,7 +19,7 @@ import at.fhtw.webenprjbackend.entity.Post;
  * @version 0.1
  */
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, UUID> {
 
     /**
      * Find all posts ordered by creation date (newest first).
@@ -36,24 +38,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      */
     List<Post> findByContentContainingIgnoreCase(String keyword);
 
-    /**
-     * Find posts by title containing a keyword (case-insensitive).
-     * Helps students find posts about specific subjects.
-     * 
-     * @param keyword The search term to look for in post titles
-     * @return List of posts with titles containing the keyword
-     */
-    List<Post> findByTitleContainingIgnoreCase(String keyword);
+    List<Post> findBySubjectIgnoreCase(String subject);
 
-    /**
-     * Custom query to search posts by both title and content.
-     * More flexible search for finding relevant study materials.
-     * 
-     * @param keyword The search term
-     * @return List of posts matching in either title or content
-     */
-    @Query("SELECT p FROM Post p WHERE " +
-           "LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<Post> searchByTitleOrContent(@Param("keyword") String keyword);
+    List<Post> findByUser(User user);
+
+
 }
