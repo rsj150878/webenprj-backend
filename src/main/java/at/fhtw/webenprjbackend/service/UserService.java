@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+// TODO: Salutation
+
 /**
  * Service layer for user operations.
  *

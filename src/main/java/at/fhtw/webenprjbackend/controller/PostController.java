@@ -2,7 +2,10 @@ package at.fhtw.webenprjbackend.controller;
 
 import java.util.List;
 import java.util.Optional;
-
+import java.util.UUID;
+import at.fhtw.webenprjbackend.dto.PostCreateRequest;
+import at.fhtw.webenprjbackend.dto.PostResponse;
+import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,9 +43,8 @@ public class PostController {
      * GET /posts
      */
     @GetMapping
-    public ResponseEntity<List<Post>> getAllPosts() {
-        List<Post> posts = postService.getAllPosts();
-        return ResponseEntity.ok(posts);
+    public ResponseEntity<List<PostResponse>> getAllPosts() {
+        return ResponseEntity.ok(postService.getAllPosts());
     }
 
     /**
@@ -50,10 +52,8 @@ public class PostController {
      * GET /posts/1
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Post> getPostById(@PathVariable Long id) {
-        Optional<Post> post = postService.getPostById(id);
-        return post.map(ResponseEntity::ok)
-                  .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<PostResponse> getPostById(@PathVariable UUID id) {
+        return ResponseEntity.ok(postService.getPostById(id));
     }
 
     /**
@@ -61,9 +61,10 @@ public class PostController {
      * POST /posts
      */
     @PostMapping
-    public ResponseEntity<Post> createPost(@Valid @RequestBody Post post) {
-        Post createdPost = postService.createPost(post);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdPost);
+    public ResponseEntity<PostResponse> createPost(
+            @Valid @RequestBody PostCreateRequest request) {
+        PostResponse created = postService.createPost(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     /**
@@ -71,11 +72,11 @@ public class PostController {
      * PUT /posts/1
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Post> updatePost(@PathVariable Long id, 
-                                         @Valid @RequestBody Post post) {
-        Optional<Post> updatedPost = postService.updatePost(id, post);
-        return updatedPost.map(ResponseEntity::ok)
-                         .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<PostResponse> updatePost(
+            @PathVariable UUID id,
+            @Valid @RequestBody PostUpdateRequest request) {
+        PostResponse updated = postService.updatePost(id, request);
+        return ResponseEntity.ok(updated);
     }
 
     /**
@@ -83,19 +84,19 @@ public class PostController {
      * DELETE /posts/1
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        boolean deleted = postService.deletePost(id);
-        return deleted ? ResponseEntity.noContent().build()
-                      : ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
+        postService.deletePost(id);
+        return ResponseEntity.noContent().build();
     }
+
 
     /**
      * Search posts by keyword
      * GET /posts/search?q=math
      */
     @GetMapping("/search")
-    public ResponseEntity<List<Post>> searchPosts(@RequestParam("q") String keyword) {
-        List<Post> posts = postService.searchPosts(keyword);
-        return ResponseEntity.ok(posts);
+    public ResponseEntity<List<PostResponse>> searchPosts(@RequestParam("q") String keyword) {
+        return ResponseEntity.ok(postService.searchPosts(keyword));
     }
+
 }

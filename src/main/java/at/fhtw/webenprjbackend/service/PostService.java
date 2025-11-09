@@ -1,13 +1,22 @@
 // TODO: Probably have to move a bunch of this to the Repository layer
 package at.fhtw.webenprjbackend.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import at.fhtw.webenprjbackend.dto.PostCreateRequest;
+import at.fhtw.webenprjbackend.dto.PostResponse;
+import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
+import at.fhtw.webenprjbackend.entity.User;
+import at.fhtw.webenprjbackend.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.repository.PostRepository;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Service layer for Post operations.
@@ -15,91 +24,159 @@ import at.fhtw.webenprjbackend.repository.PostRepository;
  * 
  * @author Wii
  * @version 0.1
+ *
+ * @author jasmin
+ *  @version 0.2
  */
 @Service
 public class PostService {
 
     private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
     /**
      * Constructor injection (preferred over @Autowired on fields)
      */
-    public PostService(PostRepository postRepository) {
+    public PostService(PostRepository postRepository, UserRepository userRepository) {
         this.postRepository = postRepository;
+        this.userRepository = userRepository;
     }
 
     /**
      * Get all posts ordered by creation date (newest first).
      */
-    public List<Post> getAllPosts() {
-        return postRepository.findAllByOrderByCreatedAtDesc();
+    public List<PostResponse> getAllPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<PostResponse> responses = new ArrayList<>();
+
+        for (Post post : posts) {
+            responses.add(mapToResponse(post));
+        }
+        return responses;
     }
 
     /**
      * Get a specific post by ID.
      */
-    public Optional<Post> getPostById(Long id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-        return postRepository.findById(id);
+    public PostResponse getPostById(UUID id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        return mapToResponse(post);
     }
 
     /**
-     * Create a new study post.
+     * Create a new post.
+     * For Milestone 1: userId comes from request.
+     * Later: from JWT.
      */
-    public Post createPost(Post post) {
-        if (post == null) {
-            throw new IllegalArgumentException("Post cannot be null");
+    public PostResponse createPost(PostCreateRequest request) {
+
+        if (request.getUserId
+
+                () == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UserId is required");
         }
-        return postRepository.save(post);
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // Subject ohne führendes # speichern (intern sauber)
+        String normalizedSubject = request.getSubject().startsWith("#")
+                ? request.getSubject().substring(1)
+                : request.getSubject();
+
+        Post post = new Post(
+                normalizedSubject,
+                request.getContent(),
+                request.getImageUrl(),
+                user
+        );
+
+        Post saved = postRepository.save(post);
+        return mapToResponse(saved);
     }
 
     /**
      * Update an existing post.
      */
-    public Optional<Post> updatePost(Long id, Post updatedPost) {
-        if (id == null || updatedPost == null) {
-            return Optional.empty();
+    public PostResponse updatePost(UUID id, PostUpdateRequest request) {
+        Post existing = postRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+        if (request.getSubject() != null) {
+            String normalizedSubject = request.getSubject().startsWith("#")
+                    ? request.getSubject().substring(1)
+                    : request.getSubject();
+            existing.setSubject(normalizedSubject);
         }
-        
-        return postRepository.findById(id)
-            .map(existingPost -> {
-                existingPost.setContent(updatedPost.getContent());
-                existingPost.setTitle(updatedPost.getTitle());
-                return postRepository.save(existingPost);
-            });
+
+        if (request.getContent() != null) {
+            existing.setContent(request.getContent());
+        }
+
+        if (request.getImageUrl() != null) {
+            existing.setImageUrl(request.getImageUrl());
+        }
+
+        Post saved = postRepository.save(existing);
+        return mapToResponse(saved);
     }
+
 
     /**
      * Delete a post by ID.
      */
-    public boolean deletePost(Long id) {
-        if (id == null) {
-            return false;
+    public void deletePost(UUID id) {
+        if (!postRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
         }
-        
-        if (postRepository.existsById(id)) {
-            postRepository.deleteById(id);
-            return true;
-        }
-        return false;
+        postRepository.deleteById(id);
     }
 
     /**
      * Search posts by keyword in content (simplified version).
      */
-    public List<Post> searchPosts(String keyword) {
+    public List<PostResponse> searchPosts(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllPosts();
         }
-        return postRepository.findByContentContainingIgnoreCase(keyword.trim());
+
+        List<Post> posts =
+                postRepository.findByContentContainingIgnoreCase(keyword.trim());
+        List<PostResponse> responses = new ArrayList<>();
+        for (Post post : posts) {
+            responses.add(mapToResponse(post));
+        }
+        return responses;
     }
 
-    /**
-     * Get total number of posts.
-     */
     public long getPostCount() {
         return postRepository.count();
+    }
+
+    public List<PostResponse> searchBySubject(String subject) {
+        String normalized = subject.startsWith("#")
+                ? subject.substring(1)
+                : subject;
+        List<Post> posts = postRepository.findBySubjectIgnoreCase(normalized);
+        return posts.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+
+
+    private PostResponse mapToResponse(Post post) {
+        return new PostResponse(
+                post.getId(),
+                "#" + post.getSubject(), // for Frontend pretty with #
+                post.getContent(),
+                post.getImageUrl(),
+                post.getCreatedAt(),
+                post.getUpdatedAt(),
+                post.getUser().getId(),
+                post.getUser().getUsername()
+        );
     }
 }
