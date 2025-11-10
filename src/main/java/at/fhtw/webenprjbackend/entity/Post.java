@@ -34,7 +34,7 @@ public class Post {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @ManyToOne(optional = false) // TODO: cascade = CascadeType.PERSIST?
+    @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
