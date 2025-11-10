@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-
 /**
  *  REST controller for managing user operations.
  *  Handles API requests related to user registration and retrieval.
@@ -36,7 +35,7 @@ public class UserController {
     }
 
     /**
-     * POST /users
+     *
      * Create a new user.
      */
     @PostMapping
@@ -46,7 +45,7 @@ public class UserController {
     }
 
     /**
-     * GET /users
+     *
      * Retrieve all registered users.
      */
     @GetMapping
@@ -55,7 +54,7 @@ public class UserController {
     }
 
     /**
-     * GET /users/{id}
+     *
      * Retrieve a single user by UIID.
      */
     @GetMapping("/{id}")

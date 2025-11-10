@@ -1,7 +1,6 @@
 package at.fhtw.webenprjbackend.controller;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.service.PostService;
 import jakarta.validation.Valid;
 
