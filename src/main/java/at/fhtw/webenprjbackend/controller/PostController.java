@@ -27,6 +27,9 @@ import jakarta.validation.Valid;
  * 
  * @author Wii
  * @version 0.1
+ *
+ * @author jasmin
+ * @version 0.2
  */
 @RestController
 @RequestMapping("/posts")
@@ -34,13 +37,16 @@ public class PostController {
 
     private final PostService postService;
 
+    /**
+     * Constructor injection for PostService.
+     */
     public PostController(PostService postService) {
         this.postService = postService;
     }
 
     /**
      * Get all posts (main feed)
-     * GET /posts
+     *
      */
     @GetMapping
     public ResponseEntity<List<PostResponse>> getAllPosts() {
@@ -49,7 +55,7 @@ public class PostController {
 
     /**
      * Get a specific post by ID
-     * GET /posts/1
+     *
      */
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPostById(@PathVariable UUID id) {
@@ -58,7 +64,7 @@ public class PostController {
 
     /**
      * Create a new post
-     * POST /posts
+     *
      */
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
@@ -69,7 +75,7 @@ public class PostController {
 
     /**
      * Update an existing post
-     * PUT /posts/1
+     *
      */
     @PutMapping("/{id}")
     public ResponseEntity<PostResponse> updatePost(
@@ -81,7 +87,7 @@ public class PostController {
 
     /**
      * Delete a post
-     * DELETE /posts/1
+     *
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
@@ -89,10 +95,9 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-
     /**
      * Search posts by keyword
-     * GET /posts/search?q=math
+     *
      */
     @GetMapping("/search")
     public ResponseEntity<List<PostResponse>> searchPosts(@RequestParam("q") String keyword) {

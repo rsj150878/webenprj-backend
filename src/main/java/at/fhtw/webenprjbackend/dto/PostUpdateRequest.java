@@ -5,7 +5,11 @@ import jakarta.validation.constraints.Size;
 
 /**
  * DTO for updating an existing post.
- * Fields are optional; only non-null values will be updated.
+ * Used to receive updated post data from the frontend.
+ *
+ * Only provided (non-null) fields will be updated.
+ *
+ * Part of the Motivise study blogging platform backend.
  *
  * @author jasmin
  * @version 0.1
@@ -24,20 +28,22 @@ public class PostUpdateRequest {
             message = "Image URL too long")
     private String imageUrl;
 
+
+    // ===============================
+    // Getters and Setters
+    // ===============================
     public String getSubject() {
         return subject;
     }
     public void setSubject(String subject) {
         this.subject = subject;
     }
-
     public String getContent() {
         return content;
     }
     public void setContent(String content) {
         this.content = content;
     }
-
     public String getImageUrl() {
         return imageUrl;
     }
