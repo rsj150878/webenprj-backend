@@ -8,16 +8,12 @@ import java.util.UUID;
 /**
  * Entity class representing a registered user in the Motivise platform.
  *
- * Defines user-related database fields such as email, username, role, and timestamps.
- * Used for persistence and ORM mapping via JPA/Hibernate.
- *
  * @author jasmin
  * @version 0.1
  */
 @Entity
 @Table(name = "users")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -50,15 +46,11 @@ public class User {
     private LocalDateTime updatedAt;
 
 
-    /**
-     * Default constructor required by JPA.
-     * Hibernate uses this when instantiating entities from the database.
-     */
+    // ===============================
+    // Constructors
+    // ===============================
     public User() {}
 
-    /**
-     * Constructs a new User instance.
-     */
     public User(String email, String username, String password, String countryCode, String profileImageUrl, Role role) {
         this.email = email;
         this.username = username;
@@ -71,67 +63,52 @@ public class User {
     // ===============================
     // Getters and Setters
     // ===============================
-
     public UUID getId() {
         return id;
     }
-
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }
-
     public String getUsername() {
         return username;
     }
-
     public void setUsername(String username) {
         this.username = username;
     }
-
     public String getPassword() {
         return password;
     }
-
     public void setPassword(String password) {
         this.password = password;
     }
-
     public String getCountryCode() {
         return countryCode;
     }
-
     public void setCountryCode(String countryCode) {
         this.countryCode = countryCode;
     }
-
     public String getProfileImageUrl() {
         return profileImageUrl;
     }
-
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }
-
     public Role getRole() {
         return role;
     }
-
     public void setRole(Role role) {
         this.role = role;
     }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-
-
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
 
     @Override
     public String toString() {

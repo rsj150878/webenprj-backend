@@ -5,8 +5,6 @@ import java.util.UUID;
 
 /**
  * Response Data Transfer Object (DTO) for returning user information.
- * Used to send user details back to the frontend without exposing sensitive data.
- *
  * Part of the Motivise study blogging platform backend.
  *
  * @author jasmin
@@ -23,10 +21,6 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-
-    /**
-     * Constructs a UserResponse with all relevant user information.
-     */
     public UserResponse(UUID id, String email, String username, String countryCode, String profileImageUrl, String role, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.email = email;

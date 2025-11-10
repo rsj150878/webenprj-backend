@@ -5,8 +5,6 @@ import java.util.UUID;
 
 /**
  * DTO for sending post data to the frontend.
- * Contains all relevant post details shown in the UI.
- *
  * Part of the Motivise study blogging platform backend.
  *
  * @author jasmin
@@ -28,10 +26,6 @@ public class PostResponse {
     private UUID userId;
     private String username;
 
-
-    /**
-     * Constructor used for building the response.
-     */
     public PostResponse(UUID id, String subject, String content, String imageUrl, LocalDateTime createdAt, LocalDateTime updatedAt, UUID userId, String username) {
         this.id = id;
         this.subject = subject;
@@ -56,5 +50,4 @@ public class PostResponse {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public UUID getUserId() { return userId; }
     public String getUsername() { return username; }
-
 }

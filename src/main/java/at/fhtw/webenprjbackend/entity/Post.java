@@ -1,20 +1,19 @@
 package at.fhtw.webenprjbackend.entity;
+
 // TODO: Consider switching to OffsetDateTime instead of LocalDateTime (storing timezone offset)
 // TODO: Consider adding status - publish visibility, DRAFT / PUBLISHED
 // TODO: Auditing (createdBy, modifiedBy) implementation
+
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Study post entity for the Motivise micro-blogging platform.
  * Enables students to share study notes, ask questions, and collaborate.
- *  *
+ *
  * @author jasmin
  * @version 0.2
  */
@@ -22,10 +21,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "posts")
 public class Post {
 
-    /**
-     * Unique identifier for the post.
-     *
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -39,10 +34,6 @@ public class Post {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    /**
-     * Many-to-one relationship with the User entity.
-     * Each post belongs to one user (author).
-     */
     @ManyToOne(optional = false) // TODO: cascade = CascadeType.PERSIST?
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -58,17 +49,8 @@ public class Post {
     // ===============================
     // Constructors
     // ===============================
-
-    /**
-     * Default constructor required by JPA.
-     * Used by Hibernate when loading entities from database.
-     */
     public Post() {}
 
-    /**
-     * Constructor for creating a new post.
-     * Used when saving new posts to the database.
-     */
     public Post(String subject, String content, String imageUrl, User user) {
         this.subject = subject;
         this.content = content;

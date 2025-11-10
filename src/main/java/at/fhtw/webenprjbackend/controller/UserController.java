@@ -14,8 +14,6 @@ import java.util.UUID;
 
 /**
  *  REST controller for managing user operations.
- *  Handles API requests related to user registration and retrieval.
- *
  *  Part of the Motivise study blogging platform backend.
  *
  * @author jasmin
@@ -27,36 +25,21 @@ public class UserController {
 
     private final UserService userService;
 
-    /**
-     * Constructor injection for UserService.
-     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    /**
-     *
-     * Create a new user.
-     */
     @PostMapping
     public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
         UserResponse created = userService.registerUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    /**
-     *
-     * Retrieve all registered users.
-     */
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    /**
-     *
-     * Retrieve a single user by UIID.
-     */
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));

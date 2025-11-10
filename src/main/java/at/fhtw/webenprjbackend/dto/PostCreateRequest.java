@@ -7,8 +7,6 @@ import java.util.UUID;
 
 /**
  * Request Data Transfer Object (DTO) for creating a new post.
- * Used to receive post data from the frontend.
- *
  * Part of the Motivise study blogging platform backend.
  *
  * @author jasmin
@@ -16,10 +14,8 @@ import java.util.UUID;
  */
 
 public class PostCreateRequest {
-
     /**
      * Subject (topic) of the post.
-     * Must be 2–30 characters, letters/numbers/-/_, optional '#'.
      */
     @NotBlank (message = "Subject is required")
     @Pattern(
@@ -28,10 +24,8 @@ public class PostCreateRequest {
     )
     private String subject;
 
-
     /**
      * Main content of the post.
-     * Required, max. 500 characters.
      */
     @NotBlank(message = "Content is required")
     @Size(max = 500, message = "Content must not be longer than 500 characters")

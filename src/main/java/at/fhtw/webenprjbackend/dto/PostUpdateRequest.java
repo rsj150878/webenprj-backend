@@ -1,14 +1,9 @@
 package at.fhtw.webenprjbackend.dto;
 
-
 import jakarta.validation.constraints.Size;
 
 /**
  * DTO for updating an existing post.
- * Used to receive updated post data from the frontend.
- *
- * Only provided (non-null) fields will be updated.
- *
  * Part of the Motivise study blogging platform backend.
  *
  * @author jasmin
