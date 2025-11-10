@@ -21,10 +21,6 @@ import jakarta.validation.Valid;
 
 /**
  * REST Controller for Post operations.
- * Handles HTTP requests for the study blogging platform.
- * 
- * @author Wii
- * @version 0.1
  *
  * @author jasmin
  * @version 0.2
@@ -35,35 +31,20 @@ public class PostController {
 
     private final PostService postService;
 
-    /**
-     * Constructor injection for PostService.
-     */
     public PostController(PostService postService) {
         this.postService = postService;
     }
 
-    /**
-     * Get all posts (main feed)
-     *
-     */
     @GetMapping
     public ResponseEntity<List<PostResponse>> getAllPosts() {
         return ResponseEntity.ok(postService.getAllPosts());
     }
 
-    /**
-     * Get a specific post by ID
-     *
-     */
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPostById(@PathVariable UUID id) {
         return ResponseEntity.ok(postService.getPostById(id));
     }
 
-    /**
-     * Create a new post
-     *
-     */
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
             @Valid @RequestBody PostCreateRequest request) {
@@ -71,10 +52,6 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    /**
-     * Update an existing post
-     *
-     */
     @PutMapping("/{id}")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable UUID id,
@@ -83,20 +60,12 @@ public class PostController {
         return ResponseEntity.ok(updated);
     }
 
-    /**
-     * Delete a post
-     *
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Search posts by keyword
-     *
-     */
     @GetMapping("/search")
     public ResponseEntity<List<PostResponse>> searchPosts(@RequestParam("q") String keyword) {
         return ResponseEntity.ok(postService.searchPosts(keyword));
