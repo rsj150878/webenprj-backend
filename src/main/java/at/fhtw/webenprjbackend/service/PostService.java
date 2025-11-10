@@ -19,14 +19,13 @@ import at.fhtw.webenprjbackend.repository.PostRepository;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Service layer for Post operations.
- * Handles business logic and acts as a bridge between controllers and repositories.
- * 
- * @author Wii
- * @version 0.1
+ * Service layer for post operations.
+ * Contains business logic and connects the controller with the repository.
+ *
+ * Part of the Motivise study blogging platform backend.
  *
  * @author jasmin
- *  @version 0.2
+ * @version 0.2
  */
 @Service
 public class PostService {
@@ -43,10 +42,11 @@ public class PostService {
     }
 
     /**
-     * Get all posts ordered by creation date (newest first).
+     * Get all posts ordered by creation date (newest first)
+     * Used to display the main feed.
      */
     public List<PostResponse> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
+        List<Post> posts = postRepository.findAllByOrderByCreatedAtDesc();
         List<PostResponse> responses = new ArrayList<>();
 
         for (Post post : posts) {
@@ -56,7 +56,8 @@ public class PostService {
     }
 
     /**
-     * Get a specific post by ID.
+     * Get a single post by its UUID.
+     * Throws 404 if not found.
      */
     public PostResponse getPostById(UUID id) {
         Post post = postRepository.findById(id)
@@ -80,7 +81,7 @@ public class PostService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // Subject ohne führendes # speichern (intern sauber)
+        // Normalize subject (remove leading # before saving)
         String normalizedSubject = request.getSubject().startsWith("#")
                 ? request.getSubject().substring(1)
                 : request.getSubject();
@@ -98,6 +99,7 @@ public class PostService {
 
     /**
      * Update an existing post.
+     * Only provided (non-null) fields will be changed.
      */
     public PostResponse updatePost(UUID id, PostUpdateRequest request) {
         Post existing = postRepository.findById(id)
@@ -123,9 +125,9 @@ public class PostService {
         return mapToResponse(saved);
     }
 
-
     /**
-     * Delete a post by ID.
+     * Delete a post by UUID.
+     * Throws 404 if post does not exist.
      */
     public void deletePost(UUID id) {
         if (!postRepository.existsById(id)) {
@@ -135,13 +137,13 @@ public class PostService {
     }
 
     /**
-     * Search posts by keyword in content (simplified version).
+     * Search posts by keyword (in content).
+     * Returns all posts if keyword is empty.
      */
     public List<PostResponse> searchPosts(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllPosts();
         }
-
         List<Post> posts =
                 postRepository.findByContentContainingIgnoreCase(keyword.trim());
         List<PostResponse> responses = new ArrayList<>();
@@ -151,10 +153,14 @@ public class PostService {
         return responses;
     }
 
+    /** Count all existing posts (for dashboard or statistics). */
     public long getPostCount() {
         return postRepository.count();
     }
 
+    /**
+     * Search posts by exact subject (ignores case, normalizes leading '#').
+     */
     public List<PostResponse> searchBySubject(String subject) {
         String normalized = subject.startsWith("#")
                 ? subject.substring(1)
@@ -165,8 +171,10 @@ public class PostService {
                 .toList();
     }
 
-
-
+    /**
+     * Helper method to convert a Post entity into a PostResponse DTO.
+     * Adds '#' to the subject for frontend display.
+     */
     private PostResponse mapToResponse(Post post) {
         return new PostResponse(
                 post.getId(),

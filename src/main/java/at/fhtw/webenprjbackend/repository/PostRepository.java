@@ -14,28 +14,17 @@ import java.util.UUID;
 /**
  * Repository interface for Post entity operations.
  * Extends JpaRepository to provide CRUD operations and custom queries.
- * 
- * @author Wii
- * @version 0.1
+ *
+ * Part of the Motivise study blogging platform backend.
+ *
+ * @author jasmin
+ * @version 0.2
  */
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {
 
-    /**
-     * Find all posts ordered by creation date (newest first).
-     * Perfect for displaying the latest study posts on the main feed.
-     * 
-     * @return List of posts in descending order by creation date
-     */
     List<Post> findAllByOrderByCreatedAtDesc();
 
-    /**
-     * Search posts by content containing a keyword (case-insensitive).
-     * Useful for finding study posts about specific topics.
-     * 
-     * @param keyword The search term to look for in post content
-     * @return List of posts containing the keyword
-     */
     List<Post> findByContentContainingIgnoreCase(String keyword);
 
     List<Post> findBySubjectIgnoreCase(String subject);
