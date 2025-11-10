@@ -1,5 +1,7 @@
 package at.fhtw.webenprjbackend.controller;
 
+//TODO: For Milestone 2: DELETE UPDATE USER
+
 import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
 import at.fhtw.webenprjbackend.dto.UserResponse;
 import at.fhtw.webenprjbackend.service.UserService;
