@@ -13,9 +13,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 /**
  * Study post entity for the Motivise micro-blogging platform.
  * Enables students to share study notes, ask questions, and collaborate.
- *
- * @author jasmin
- * @version 0.2
  */
 @Entity
 @Table(name = "posts")

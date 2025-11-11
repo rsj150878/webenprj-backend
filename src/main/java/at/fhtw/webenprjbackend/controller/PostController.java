@@ -22,8 +22,6 @@ import jakarta.validation.Valid;
 /**
  * REST Controller for Post operations.
  *
- * @author jasmin
- * @version 0.2
  */
 @RestController
 @RequestMapping("/posts")

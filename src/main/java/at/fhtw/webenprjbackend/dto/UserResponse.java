@@ -6,9 +6,6 @@ import java.util.UUID;
 /**
  * Response Data Transfer Object (DTO) for returning user information.
  * Part of the Motivise study blogging platform backend.
- *
- * @author jasmin
- * @version 0.1
  */
 public class UserResponse {
 

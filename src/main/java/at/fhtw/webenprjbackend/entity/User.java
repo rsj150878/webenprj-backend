@@ -7,9 +7,6 @@ import java.util.UUID;
 
 /**
  * Entity class representing a registered user in the Motivise platform.
- *
- * @author jasmin
- * @version 0.1
  */
 @Entity
 @Table(name = "users")

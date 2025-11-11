@@ -10,9 +10,6 @@ import java.util.UUID;
 /**
  * Repository interface for Post entity operations.
  * Part of the Motivise study blogging platform backend.
- *
- * @author jasmin
- * @version 0.2
  */
 @Repository
 public interface PostRepository extends JpaRepository<Post, UUID> {

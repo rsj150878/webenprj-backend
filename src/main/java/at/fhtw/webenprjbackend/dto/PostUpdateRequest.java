@@ -5,9 +5,6 @@ import jakarta.validation.constraints.Size;
 /**
  * DTO for updating an existing post.
  * Part of the Motivise study blogging platform backend.
- *
- * @author jasmin
- * @version 0.1
  */
 public class PostUpdateRequest {
 

@@ -16,9 +16,6 @@ import java.util.UUID;
 
 /**
  * Service layer for user operations.
- *
- * @author jasmin
- * @version 0.1
  */
 @Service
 public class UserService {

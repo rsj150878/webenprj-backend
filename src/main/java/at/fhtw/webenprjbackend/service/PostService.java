@@ -20,9 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Service layer for post operations.
  * Part of the Motivise study blogging platform backend.
- *
- * @author jasmin
- * @version 0.2
  */
 @Service
 public class PostService {
@@ -54,7 +51,6 @@ public class PostService {
     public PostResponse createPost(PostCreateRequest request) {
 
         if (request.getUserId
-
                 () == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UserId is required");
         }
@@ -80,7 +76,7 @@ public class PostService {
 
     public PostResponse updatePost(UUID id, PostUpdateRequest request) {
         Post existing = postRepository.findById(id)
-                .orElseThrow(() ->
+                .orElseThrow(   () ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
         if (request.getSubject() != null) {
