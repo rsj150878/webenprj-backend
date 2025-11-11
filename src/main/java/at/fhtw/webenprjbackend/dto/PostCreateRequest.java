@@ -8,9 +8,6 @@ import java.util.UUID;
 /**
  * Request Data Transfer Object (DTO) for creating a new post.
  * Part of the Motivise study blogging platform backend.
- *
- * @author jasmin
- * @version 0.1
  */
 
 public class PostCreateRequest {

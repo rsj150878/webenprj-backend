@@ -8,9 +8,6 @@ import java.util.UUID;
 
 /**
  * Repository interface for managing User entities.
- *
- * @author jasmin
- * @version 0.1
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {

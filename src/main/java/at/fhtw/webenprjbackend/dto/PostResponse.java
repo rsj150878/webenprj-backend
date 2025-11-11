@@ -6,9 +6,6 @@ import java.util.UUID;
 /**
  * DTO for sending post data to the frontend.
  * Part of the Motivise study blogging platform backend.
- *
- * @author jasmin
- * @version 0.1
  */
 public class PostResponse {
 

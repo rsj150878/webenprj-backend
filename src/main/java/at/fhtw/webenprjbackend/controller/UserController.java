@@ -1,6 +1,7 @@
 package at.fhtw.webenprjbackend.controller;
 
 //TODO: For Milestone 2: DELETE UPDATE USER
+//TODO: getAllUsers maybe alphabetic sorting?
 
 import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
 import at.fhtw.webenprjbackend.dto.UserResponse;
@@ -16,8 +17,6 @@ import java.util.UUID;
  *  REST controller for managing user operations.
  *  Part of the Motivise study blogging platform backend.
  *
- * @author jasmin
- * @version 0.1
  */
 @RestController
 @RequestMapping("/users")

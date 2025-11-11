@@ -10,9 +10,6 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Data Transfer Object (DTO) for user registration.
- *
- * @author jasmin
- * @version 0.1
  */
 public class UserRegistrationRequest {
 
