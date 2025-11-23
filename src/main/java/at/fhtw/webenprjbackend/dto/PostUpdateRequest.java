@@ -22,7 +22,7 @@ public class PostUpdateRequest {
 
 
     // ===============================
-    // Getters and Setters
+    // Getter and Setter
     // ===============================
     public String getSubject() {
         return subject;

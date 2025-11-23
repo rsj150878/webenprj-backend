@@ -6,6 +6,7 @@ import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.entity.Role;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 // TODO: Add Salutation
+// TODO: Flyway migration cleartext PW -> with BCrypt only works for new registered users!!
 
 /**
  * Service layer for user operations.
@@ -21,12 +23,15 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private static final String DEFAULT_PROFILE_IMAGE =
             "https://example.com/default-profile.png";
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserResponse registerUser(UserRegistrationRequest request) {
