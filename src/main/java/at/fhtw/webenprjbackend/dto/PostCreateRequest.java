@@ -43,7 +43,7 @@ public class PostCreateRequest {
 
 
     // ===============================
-    // Getters and Setters
+    // Getter and Setter
     // ===============================
     public String getSubject() {
         return subject;

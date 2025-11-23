@@ -35,7 +35,7 @@ public class PostResponse {
     }
 
     // ===============================
-    // Getters
+    // Getter
     // ===============================
     public UUID getId() { return id; }
     public String getContent() { return content; }

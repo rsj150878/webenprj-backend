@@ -5,8 +5,10 @@ import java.util.UUID;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
+import at.fhtw.webenprjbackend.security.UserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,22 +47,38 @@ public class PostController {
 
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
-            @Valid @RequestBody PostCreateRequest request) {
-        PostResponse created = postService.createPost(request);
+            @Valid @RequestBody PostCreateRequest request, Authentication authentication) {
+
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+        PostResponse created = postService.createPost(request, principal.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable UUID id,
-            @Valid @RequestBody PostUpdateRequest request) {
-        PostResponse updated = postService.updatePost(id, request);
+            @Valid @RequestBody PostUpdateRequest request,
+            Authentication authentication) {
+
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        PostResponse updated = postService.updatePost(id, request, principal.getId(), isAdmin);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
-        postService.deletePost(id);
+    public ResponseEntity<Void> deletePost(@PathVariable UUID id,
+                                           Authentication authentication) {
+
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+
+        postService.deletePost(id, principal.getId(), isAdmin);
         return ResponseEntity.noContent().build();
     }
 
