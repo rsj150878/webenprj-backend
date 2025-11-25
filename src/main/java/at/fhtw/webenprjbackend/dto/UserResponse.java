@@ -9,14 +9,14 @@ import java.util.UUID;
  */
 public class UserResponse {
 
-    private UUID id;
-    private String email;
-    private String username;
-    private String countryCode;
-    private String profileImageUrl;
-    private String role;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private final UUID id;
+    private final String email;
+    private final String username;
+    private final String countryCode;
+    private final String profileImageUrl;
+    private final String role;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
 
     public UserResponse(UUID id, String email, String username, String countryCode, String profileImageUrl, String role, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
