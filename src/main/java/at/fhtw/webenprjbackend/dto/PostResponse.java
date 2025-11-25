@@ -13,15 +13,16 @@ public class PostResponse {
     private String subject;
     private String content;
     private String imageUrl;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
+
 
     /**
      * Minimal Infos from user
      *
      */
-    private UUID userId;
-    private String username;
+    private final UUID userId;
+    private final String username;
 
     public PostResponse(UUID id, String subject, String content, String imageUrl, LocalDateTime createdAt, LocalDateTime updatedAt, UUID userId, String username) {
         this.id = id;

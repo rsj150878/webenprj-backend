@@ -2,20 +2,20 @@ package at.fhtw.webenprjbackend.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
 import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.UserRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-
 import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.repository.PostRepository;
-import org.springframework.web.server.ResponseStatusException;
+
 
 /**
  * Service layer for post operations.
