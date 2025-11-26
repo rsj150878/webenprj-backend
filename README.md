@@ -196,11 +196,3 @@ docker-compose logs mysql
 3. Test both modes work correctly
 
 ---
-
-## 📚 What You Get
-
-- **🛠️ Development Mode**: Instant startup, test data, easy debugging
-- **🚀 Production Mode**: Real database, proper security, deployment-ready
-- **🧹 Smart Building**: Clean builds when needed, fast starts when possible
-- **📱 Easy Commands**: No more remembering long Maven commands
-- **🔄 Profile Switching**: Seamless environment changes
