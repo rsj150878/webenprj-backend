@@ -9,13 +9,12 @@ import java.util.UUID;
  */
 public class PostResponse {
 
-    private UUID id; // Post ID
-    private String subject;
-    private String content;
-    private String imageUrl;
+    private final UUID id; // Post ID
+    private final String subject;
+    private final String content;
+    private final String imageUrl;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
-
 
     /**
      * Minimal Infos from user
