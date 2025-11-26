@@ -2,8 +2,8 @@ package at.fhtw.webenprjbackend.dto;
 
 public class LoginResponse {
 
-    private String token;
-    private UserResponse user;
+    private final String token;
+    private final UserResponse user;
 
     // ===============================
     // Constructor
