@@ -40,6 +40,13 @@ docker-compose up -d mysql
 
 # 4. Start Spring Boot application
 ./mvnw spring-boot:run
+
+# Run with development profile
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Run with production profile  
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+
 ```
 
 ### 🌐 Access the Application
@@ -47,6 +54,10 @@ docker-compose up -d mysql
 - **API Endpoints**: http://localhost:8081
 - **API Documentation (Swagger)**: http://localhost:8081/swagger-ui/index.html
 - **phpMyAdmin** (Database UI): http://localhost:8080
+- **H2 Console** http://localhost:8081/h2-console
+    - JDBC URL: jdbc:h2:mem:motivise_dev
+    - User: sa
+    - Password: (enter nothing - yes, really.)
 
 ---
 
