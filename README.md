@@ -18,48 +18,181 @@ Optional "study streaks" show how many days in a row a user has been learning.
 
 ---
 
-## 🚀 Quick Setup Guide
+## 🚀 Super Simple Setup
 
 ### Prerequisites
-- **Docker Desktop** installed and running
 - **Java 21** (included in VS Code Java Extension Pack)
+- **Docker Desktop** (for production mode only)
 - **Git** for cloning the repository
 
-### 🐳 Start the Application
+### 🛠️ Development Mode (Recommended for coding)
+
+**Super fast startup, no Docker needed!**
 
 ```bash
-# 1. Clone the repository
+# Clone and start in dev mode
 git clone https://github.com/rsj150878/webenprj-backend
 cd webenprj-backend
-
-# 2. Start database services ( / Have Docker running)
-docker-compose up -d mysql
-
-# 3. Wait for MySQL to be ready (about 30 seconds)
-# You can check with: docker-compose logs mysql
-
-# 4. Start Spring Boot application
-./mvnw spring-boot:run
+./dev.cmd
 ```
 
-### 🌐 Access the Application
+### 🚀 Production Mode (Real database testing)
 
-- **API Endpoints**: http://localhost:8081
-- **API Documentation (Swagger)**: http://localhost:8081/swagger-ui/index.html
-- **phpMyAdmin** (Database UI): http://localhost:8080
+**Requires Docker for MySQL database**
+
+```bash
+# Clone and start in production mode
+git clone https://github.com/rsj150878/webenprj-backend
+cd webenprj-backend
+./prod.cmd
+```
+
+### 🧹 Clean Build (When changing dependencies)
+
+```bash
+# Development with clean build
+./dev.cmd clean
+
+# Production with clean build
+./prod.cmd clean
+```
+
+---
+
+## 🌐 Access Points
+
+| Mode | API | Swagger | Database UI | Test Users |
+|------|-----|---------|-------------|------------|
+| **Dev** | http://localhost:8081 | [Swagger UI](http://localhost:8081/swagger-ui/index.html) | [H2 Console](http://localhost:8081/h2-console) | ✅ Auto-loaded |
+| **Prod** | http://localhost:8081 | ❌ Disabled | [phpMyAdmin](http://localhost:8080) | ✅ From migrations |
+
+### 🔑 Test Login Credentials (Development)
+- **📧 anna.schmidt@example.com** / Password: `Password123!`
+- **📧 max.meier@example.com** / Password: `Password123!`  
+- **📧 admin@motivise.app** / Password: `AdminPass456!`
+
+### 🗄️ H2 Console Access (Development Only)
+- **URL**: http://localhost:8081/h2-console
+- **JDBC URL**: `jdbc:h2:mem:motivise_dev`
+- **Username**: `sa`
+- **Password**: (leave empty)
+
+---
+
+## 🔧 Development vs Production
+
+| Feature | Development (`./dev.cmd`) | Production (`./prod.cmd`) |
+|---------|---------------------------|---------------------------|
+| **Startup Time** | ⚡ ~10 seconds | 🐢 ~45 seconds |
+| **Database** | H2 (in-memory) | MySQL (persistent) |
+| **Docker Required** | ❌ No | ✅ Yes |
+| **Test Data** | ✅ Auto-loaded | ✅ From migrations |
+| **Database UI** | H2 Console | phpMyAdmin |
+| **API Documentation** | ✅ Swagger enabled | ❌ Disabled (security) |
+| **Data Persistence** | ❌ Lost on restart | ✅ Survives restarts |
+| **SQL Logging** | ✅ Detailed | ❌ Minimal |
+
+---
+
+## 🛠️ Command Reference
+
+### Quick Start Commands
+```bash
+# Development mode (fast, no Docker)
+./dev.cmd
+
+# Production mode (MySQL database)
+./prod.cmd
+
+# Clean build (after dependency changes)
+./dev.cmd clean
+./prod.cmd clean
+```
+
+### When to Use Clean Build
+🚨 **Use `clean` when:**
+- Adding new dependencies to `pom.xml`
+- Updating Spring Boot or Java version
+- After pulling Git changes that include `pom.xml`
+- Getting "class not found" errors
+
+⚡ **Normal startup when:**
+- Just changing Java code
+- Modifying properties files
+- Regular daily development
+
+### Manual Commands (if needed)
+```bash
+# Development mode (manual)
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Production mode (manual)
+docker-compose up -d mysql
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+```
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Database Connection Issues
+### Development Issues
 ```bash
-# Check if MySQL is running
-docker-compose ps
+# If app won't start
+./dev.cmd clean  # Try clean build
 
-# View MySQL logs
+# If H2 console doesn't work
+# Make sure you're using: ./dev.cmd (not prod.cmd)
+
+# Check application logs for errors in terminal
+```
+
+### Production Issues
+```bash
+# Check if Docker is running
+docker ps
+
+# Check MySQL status
+docker-compose ps mysql
+
+# View MySQL logs  
 docker-compose logs mysql
 
-# Restart database
+# Restart MySQL
 docker-compose restart mysql
+
+# Clean build if having issues
+./prod.cmd clean
 ```
+
+### Database Connection Issues
+```bash
+# Check if MySQL container is running
+docker-compose ps
+
+# Restart all services
+docker-compose restart
+
+# View database logs
+docker-compose logs mysql
+```
+
+---
+
+## 🎯 Quick Workflow Tips
+
+### For Daily Development:
+1. `./dev.cmd` - Start coding immediately
+2. Make changes to your code
+3. Restart with `Ctrl+C` then `./dev.cmd` again
+
+### For Testing Production Features:
+1. `./prod.cmd` - Test with real database
+2. Check phpMyAdmin for data persistence
+3. Verify API endpoints work without Swagger
+
+### After Major Changes:
+1. `./dev.cmd clean` - Clean development build
+2. `./prod.cmd clean` - Clean production build
+3. Test both modes work correctly
+
+---
