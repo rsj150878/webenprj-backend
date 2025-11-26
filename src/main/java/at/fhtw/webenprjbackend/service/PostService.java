@@ -47,14 +47,9 @@ public class PostService {
         return mapToResponse(post);
     }
 
-    public PostResponse createPost(PostCreateRequest request) {
+    public PostResponse createPost(PostCreateRequest request, UUID userId) {
 
-        if (request.getUserId
-                () == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UserId is required");
-        }
-
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // Normalize subject (remove leading # before saving)
@@ -73,10 +68,17 @@ public class PostService {
         return mapToResponse(saved);
     }
 
-    public PostResponse updatePost(UUID id, PostUpdateRequest request) {
+    public PostResponse updatePost(UUID id, PostUpdateRequest request, UUID currentUserId,
+                                   boolean isAdmin) {
         Post existing = postRepository.findById(id)
                 .orElseThrow(   () ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+
+        if (!isAdmin && !existing.getUser().getId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to edit this post");
+        }
+
 
         if (request.getSubject() != null) {
             String normalizedSubject = request.getSubject().startsWith("#")
@@ -98,11 +100,15 @@ public class PostService {
     }
 
 
-    public void deletePost(UUID id) {
-        if (!postRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+    public void deletePost(UUID id, UUID currentUserId, boolean isAdmin) {
+        Post existing = postRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+        if (!isAdmin && !existing.getUser().getId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this post");
         }
-        postRepository.deleteById(id);
+
+        postRepository.delete(existing);
     }
 
     public List<PostResponse> searchPosts(String keyword) {
