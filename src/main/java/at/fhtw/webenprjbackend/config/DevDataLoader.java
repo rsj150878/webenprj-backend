@@ -81,13 +81,13 @@ public class DevDataLoader {
             );
             postRepository.save(post3);
 
-            System.out.println("✅ Development test data loaded successfully!");
-            System.out.println("👤 Test Users:");
-            System.out.println("   📧 anna.schmidt@example.com / Password: Password123!");
-            System.out.println("   📧 max.meier@example.com / Password: Password123!");
-            System.out.println("   📧 admin@motivise.app / Password: AdminPass456!");
-            System.out.println("📝 Sample posts created for all users");
-            System.out.println("🌐 H2 Console: http://localhost:8081/h2-console");
+            System.out.println("Development test data loaded successfully!");
+            System.out.println("Test Users:");
+            System.out.println("   anna.schmidt@example.com / Password: Password123!");
+            System.out.println("   max.meier@example.com / Password: Password123!");
+            System.out.println("   admin@motivise.app / Password: AdminPass456!");
+            System.out.println("Sample posts created for all users");
+            System.out.println("H2 Console: http://localhost:8081/h2-console");
         };
     }
 }
