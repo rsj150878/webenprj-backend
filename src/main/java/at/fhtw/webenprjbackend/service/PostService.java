@@ -11,11 +11,10 @@ import org.springframework.web.server.ResponseStatusException;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
-import at.fhtw.webenprjbackend.entity.User;
-import at.fhtw.webenprjbackend.repository.UserRepository;
 import at.fhtw.webenprjbackend.entity.Post;
+import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.PostRepository;
-
+import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
  * Service layer for post operations.
