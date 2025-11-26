@@ -12,8 +12,14 @@ import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.PostRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
+/**
+ * DEVELOPMENT ONLY: Loads test data with hardcoded credentials.
+ * WARNING: Never use these credentials in production environments.
+ * This class only runs when the 'dev' profile is active.
+ */
+
 @Configuration
-@Profile("dev") // 🎯 Only runs in development profile
+@Profile("dev")
 public class DevDataLoader {
 
     @Bean
@@ -21,7 +27,7 @@ public class DevDataLoader {
                                  PostRepository postRepository,
                                  PasswordEncoder passwordEncoder) {
         return args -> {
-            System.out.println("🔄 Loading development test data...");
+            System.out.println("[DEV] Loading development test data...");
             
             // Create test users with properly hashed passwords
             // Let JPA generate IDs and timestamps automatically
