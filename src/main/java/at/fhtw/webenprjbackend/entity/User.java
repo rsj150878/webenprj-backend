@@ -5,6 +5,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+// TODO: ALTER TABLE users ADD active TINYINT(1) NOT NULL DEFAULT 1;
+
 /**
  * Entity class representing a registered user in the Motivise platform.
  */
@@ -34,6 +36,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -55,6 +60,7 @@ public class User {
         this.countryCode = countryCode;
         this.profileImageUrl = profileImageUrl;
         this.role = role;
+        this.active = true;
     }
 
     // ===============================
@@ -98,6 +104,12 @@ public class User {
     }
     public void setRole(Role role) {
         this.role = role;
+    }
+    public boolean isActive() {
+        return active;
+    }
+    public void setActive(boolean active) {
+        this.active = active;
     }
     public LocalDateTime getCreatedAt() {
         return createdAt;
