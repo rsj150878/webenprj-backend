@@ -52,7 +52,6 @@ import jakarta.validation.Valid;
 public class UserController {
 
     private static final String MEDIA_TYPE_JSON = "application/json";
-    private static final String ROLE_ADMIN = "ADMIN";
 
     private final UserService userService;
 
