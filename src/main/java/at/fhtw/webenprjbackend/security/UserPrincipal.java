@@ -1,12 +1,14 @@
 package at.fhtw.webenprjbackend.security;
 
-import at.fhtw.webenprjbackend.entity.User;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import at.fhtw.webenprjbackend.entity.User;
 
 public class UserPrincipal implements UserDetails {
 
@@ -44,7 +46,7 @@ public class UserPrincipal implements UserDetails {
     }
 
     // ===============================
-    // Overrrides (UserDetails)
+    // Overrides (UserDetails)
     // ===============================
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

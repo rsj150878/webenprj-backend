@@ -1,49 +1,164 @@
 package at.fhtw.webenprjbackend.dto;
 
 import at.fhtw.webenprjbackend.entity.Role;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Request DTO for admin-level user updates.
+ * Allows administrators to modify any user's profile information, role, and account status.
+ * This DTO includes fields that regular users cannot modify themselves.
+ */
+@Schema(description = "Admin user update request with full profile control")
 public class AdminUserUpdateRequest {
 
-    @NotBlank
-    @Email
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be valid")
+    @Schema(
+        description = "User's email address", 
+        example = "anna.schmidt@example.com",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String email;
 
-    @NotBlank
-    @Size(min = 5, max = 50)
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
+    @Schema(
+        description = "Unique username for the user", 
+        example = "study_anna",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String username;
 
-    @NotBlank
-    @Pattern(regexp = "^[A-Z]{2}$")
+    @NotBlank(message = "Country code is required")
+    @Pattern(regexp = "^[A-Z]{2}$", message = "Country code must be exactly 2 uppercase letters")
+    @Schema(
+        description = "ISO 3166-1 alpha-2 country code", 
+        example = "AT",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String countryCode;
 
+    @Size(max = 500, message = "Profile image URL cannot exceed 500 characters")
+    @Schema(
+        description = "URL to user's profile image", 
+        example = "https://example.com/images/profile1.png",
+        nullable = true
+    )
     private String profileImageUrl;
 
+    @Schema(
+        description = "User role determining access permissions", 
+        example = "USER",
+        allowableValues = {"USER", "ADMIN"},
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private Role role;   // USER or ADMIN
 
+    @Schema(
+        description = "Whether the user account is active (can login)", 
+        example = "true",
+        defaultValue = "true"
+    )
     private boolean active;
+
+    // ===============================
+    // Constructors
+    // ===============================
+
+    /**
+     * Default constructor for Jackson deserialization
+     */
+    public AdminUserUpdateRequest() {}
+
+    /**
+     * Constructor with all fields
+     * @param email User's email address
+     * @param username Unique username
+     * @param countryCode ISO country code
+     * @param profileImageUrl Profile image URL
+     * @param role User role (USER or ADMIN)
+     * @param active Account active status
+     */
+    public AdminUserUpdateRequest(String email, String username, String countryCode, 
+                                 String profileImageUrl, Role role, boolean active) {
+        this.email = email;
+        this.username = username;
+        this.countryCode = countryCode;
+        this.profileImageUrl = profileImageUrl;
+        this.role = role;
+        this.active = active;
+    }
 
     // ===============================
     // Getters and Setters
     // ===============================
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getEmail() { 
+        return email; 
+    }
+    
+    public void setEmail(String email) { 
+        this.email = email; 
+    }
 
-    public String getCountryCode() { return countryCode; }
-    public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
+    public String getUsername() { 
+        return username; 
+    }
+    
+    public void setUsername(String username) { 
+        this.username = username; 
+    }
 
-    public String getProfileImageUrl() { return profileImageUrl; }
-    public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
+    public String getCountryCode() { 
+        return countryCode; 
+    }
+    
+    public void setCountryCode(String countryCode) { 
+        this.countryCode = countryCode; 
+    }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public String getProfileImageUrl() { 
+        return profileImageUrl; 
+    }
+    
+    public void setProfileImageUrl(String profileImageUrl) { 
+        this.profileImageUrl = profileImageUrl; 
+    }
 
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
+    public Role getRole() { 
+        return role; 
+    }
+    
+    public void setRole(Role role) { 
+        this.role = role; 
+    }
+
+    public boolean isActive() { 
+        return active; 
+    }
+    
+    public void setActive(boolean active) { 
+        this.active = active; 
+    }
+
+    // ===============================
+    // Object Methods
+    // ===============================
+
+    @Override
+    public String toString() {
+        return "AdminUserUpdateRequest{" +
+                "email='" + email + '\'' +
+                ", username='" + username + '\'' +
+                ", countryCode='" + countryCode + '\'' +
+                ", profileImageUrl='" + profileImageUrl + '\'' +
+                ", role=" + role +
+                ", active=" + active +
+                '}';
+    }
 }
