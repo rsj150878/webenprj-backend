@@ -47,6 +47,27 @@ cd webenprj-backend
 ./prod.cmd
 ```
 
+### 🧪 Testing Commands
+
+**Comprehensive test suite with coverage reporting**
+
+```bash
+# Run all tests
+./test.cmd
+
+# Run tests with coverage report
+./test.cmd coverage
+
+# Run specific test class
+./test.cmd specific PostServiceTest
+
+# Quick test run (no coverage)
+./test.cmd quick
+
+# See all test options
+./test.cmd help
+```
+
 ### 🧹 Clean Build (When changing dependencies)
 
 ```bash
@@ -77,6 +98,12 @@ cd webenprj-backend
 - **Username**: `sa`
 - **Password**: (leave empty)
 
+### 📊 Test Coverage Reports
+After running `./test.cmd coverage`:
+- **HTML Report**: Open `target/site/jacoco/index.html` in browser
+- **Current Coverage**: ~21% overall, 31% service layer
+- **Test Reports**: View `target/surefire-reports/` for detailed results
+
 ---
 
 ## 🔧 Development vs Production
@@ -101,12 +128,51 @@ cd webenprj-backend
 # Development mode (fast, no Docker)
 ./dev.cmd
 
+# Get development URLs and test data
+./dev.cmd info
+
 # Production mode (MySQL database)
 ./prod.cmd
 
 # Clean build (after dependency changes)
 ./dev.cmd clean
 ./prod.cmd clean
+```
+
+### Testing Commands
+```bash
+# Run all tests
+./test.cmd
+
+# Run tests with coverage report
+./test.cmd coverage
+
+# Run only unit tests (DTO + Service layer)
+./test.cmd unit
+
+# Run only integration tests
+./test.cmd integration
+
+# Quick test run (no coverage)
+./test.cmd quick
+
+# Run specific test class
+./test.cmd specific PostServiceTest
+
+# Show all test options
+./test.cmd help
+```
+
+### Development Helper Commands
+```bash
+# Start server
+./dev.cmd
+
+# Show development URLs and credentials (run in another terminal)
+./dev.cmd info
+
+# Show all development options
+./dev.cmd help
 ```
 
 ### When to Use Clean Build
@@ -129,6 +195,9 @@ cd webenprj-backend
 # Production mode (manual)
 docker-compose up -d mysql
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+
+# Manual test run with coverage
+./mvnw clean test jacoco:report
 ```
 
 ---
@@ -144,6 +213,18 @@ docker-compose up -d mysql
 # Make sure you're using: ./dev.cmd (not prod.cmd)
 
 # Check application logs for errors in terminal
+```
+
+### Testing Issues
+```bash
+# If tests fail to run
+./test.cmd quick  # Try quick test run
+
+# If coverage report doesn't generate
+./mvnw clean test jacoco:report  # Manual coverage run
+
+# View detailed test results
+# Open: target/surefire-reports/index.html
 ```
 
 ### Production Issues
@@ -182,8 +263,16 @@ docker-compose logs mysql
 
 ### For Daily Development:
 1. `./dev.cmd` - Start coding immediately
-2. Make changes to your code
-3. Restart with `Ctrl+C` then `./dev.cmd` again
+2. `./dev.cmd info` - Get URLs and test credentials (in another terminal)
+3. Make changes to your code
+4. `./test.cmd quick` - Run tests while developing
+5. Restart with `Ctrl+C` then `./dev.cmd` again
+
+### For Testing and Quality Assurance:
+1. `./test.cmd coverage` - Generate full test coverage report
+2. Open `target/site/jacoco/index.html` to view coverage
+3. `./test.cmd specific TestClassName` - Debug specific failing tests
+4. `./test.cmd unit` - Quick unit test runs during development
 
 ### For Testing Production Features:
 1. `./prod.cmd` - Test with real database
@@ -192,7 +281,8 @@ docker-compose logs mysql
 
 ### After Major Changes:
 1. `./dev.cmd clean` - Clean development build
-2. `./prod.cmd clean` - Clean production build
-3. Test both modes work correctly
+2. `./test.cmd coverage` - Verify tests still pass
+3. `./prod.cmd clean` - Clean production build
+4. Test both modes work correctly
 
 ---
