@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import io.swagger.v3.oas.annotations.servers.Server;
 
 /**
  * Central OpenAPI 3.0 configuration for the Motivise Study Platform API.
@@ -44,21 +43,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
             3. Create your first study post with `POST /posts`
             4. Explore other users and posts with the search endpoints
             """
-    ),
-    servers = {
-        @Server(
-            url = "http://localhost:8081",
-            description = "🛠️ Development Server - Local development environment"
-        ),
-        @Server(
-            url = "https://api.motivise.app",
-            description = "🚀 Production Server - Live production environment"
-        ),
-        @Server(
-            url = "https://staging.api.motivise.app",
-            description = "🧪 Staging Server - Pre-production testing environment"
-        )
-    }
+    )
 )
 @SecurityScheme(
     name = "bearerAuth",
