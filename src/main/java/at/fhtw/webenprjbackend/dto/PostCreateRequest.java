@@ -1,72 +1,153 @@
 package at.fhtw.webenprjbackend.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import java.util.UUID;
 
 /**
- * Request Data Transfer Object (DTO) for creating a new post.
+ * Request Data Transfer Object (DTO) for creating a new study post.
+ * Used when authenticated users want to share their learning progress or study updates.
  * Part of the Motivise study blogging platform backend.
  */
-
+@Schema(description = "Request to create a new study post")
 public class PostCreateRequest {
-    /**
-     * Subject (topic) of the post.
-     */
-    @NotBlank (message = "Subject is required")
+
+    @NotBlank(message = "Subject is required")
     @Pattern(
-            regexp = "^#?[A-Za-z0-9_-]{2,30}$",
-            message = "Subject must be 2-30 characters, can include letters/numbers/-/_; optional leading with a '#' symbol"
+        regexp = "^#?[A-Za-z0-9_\\-\\s]{2,30}$",
+        message = "Subject must be 2-30 characters, can include letters, numbers, spaces, dashes, underscores, and optional leading '#'"
+    )
+    @Schema(
+        description = "Subject/topic of the study post (hashtag-style supported)", 
+        example = "#JavaLearning",
+        requiredMode = Schema.RequiredMode.REQUIRED
     )
     private String subject;
 
-    /**
-     * Main content of the post.
-     */
     @NotBlank(message = "Content is required")
-    @Size(max = 500, message = "Content must not be longer than 500 characters")
+    @Size(min = 10, max = 500, message = "Content must be between 10 and 500 characters")
+    @Schema(
+        description = "Main content describing the study progress or learning update", 
+        example = "Just finished learning about Spring Boot dependency injection. The concept of IoC is really powerful!",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String content;
 
-    /**
-     * Optional image URL attached to the post.
-     */
-    @Size(max = 500, message = "Image URL too long")
+    @Size(max = 500, message = "Image URL cannot exceed 500 characters")
+    @Pattern(
+        regexp = "^(https?://).*\\.(jpg|jpeg|png|gif|webp)$",
+        message = "Must be a valid HTTP(S) URL ending with jpg, jpeg, png, gif, or webp",
+        flags = Pattern.Flag.CASE_INSENSITIVE
+    )
+    @Schema(
+        description = "Optional image URL to accompany the post (study screenshots, diagrams, etc.)", 
+        example = "https://example.com/images/spring-boot-diagram.png",
+        nullable = true
+    )
     private String imageUrl;
 
+    // Note: userId is extracted from JWT token in the controller, not sent in request body
+
+    // ===============================
+    // Constructors
+    // ===============================
+
     /**
-     * User ID of the author.
-     * For Milestone 1 sent in request body;
-     * later extracted from JWT token.
+     * Default constructor for Jackson deserialization
      */
-    private UUID userId;
+    public PostCreateRequest() {}
 
+    /**
+     * Constructor for creating a post with subject and content
+     * @param subject The post subject/topic
+     * @param content The main post content
+     */
+    public PostCreateRequest(String subject, String content) {
+        this.subject = subject;
+        this.content = content;
+    }
+
+    /**
+     * Constructor for creating a post with all fields
+     * @param subject The post subject/topic
+     * @param content The main post content
+     * @param imageUrl Optional image URL
+     */
+    public PostCreateRequest(String subject, String content, String imageUrl) {
+        this.subject = subject;
+        this.content = content;
+        this.imageUrl = imageUrl;
+    }
 
     // ===============================
-    // Getter and Setter
+    // Getters and Setters
     // ===============================
+
     public String getSubject() {
         return subject;
     }
+
     public void setSubject(String subject) {
         this.subject = subject;
     }
+
     public String getContent() {
         return content;
     }
+
     public void setContent(String content) {
         this.content = content;
     }
+
     public String getImageUrl() {
         return imageUrl;
     }
+
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
-    public UUID getUserId() {
-        return userId;
+
+    // ===============================
+    // Utility Methods
+    // ===============================
+
+    /**
+     * Checks if the post has an associated image
+     * @return true if imageUrl is provided and not empty
+     */
+    public boolean hasImage() {
+        return imageUrl != null && !imageUrl.trim().isEmpty();
     }
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+
+    /**
+     * Gets the subject formatted as a hashtag
+     * @return subject with leading # if not already present
+     */
+    public String getHashtagSubject() {
+        if (subject == null) return null;
+        return subject.startsWith("#") ? subject : "#" + subject;
+    }
+
+    /**
+     * Validates that content is meaningful (not just whitespace)
+     * @return true if content has substantial text
+     */
+    public boolean hasValidContent() {
+        return content != null && content.trim().length() >= 10;
+    }
+
+    // ===============================
+    // Object Methods
+    // ===============================
+
+    @Override
+    public String toString() {
+        return "PostCreateRequest{" +
+                "subject='" + subject + '\'' +
+                ", content='" + (content != null && content.length() > 50 ? 
+                    content.substring(0, 50) + "..." : content) + '\'' +
+                ", imageUrl='" + imageUrl + '\'' +
+                '}';
     }
 }
