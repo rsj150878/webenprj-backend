@@ -1,4 +1,4 @@
-package at.fhtw.webenprjbackend.filestorage;
+package at.fhtw.webenprjbackend.filestorage.minio;
 
 import io.minio.MinioClient;
 import org.springframework.context.annotation.Bean;
