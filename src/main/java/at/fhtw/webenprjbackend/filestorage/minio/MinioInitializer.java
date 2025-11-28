@@ -1,14 +1,17 @@
-package at.fhtw.webenprjbackend.filestorage;
+package at.fhtw.webenprjbackend.filestorage.minio;
 
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MinioInitializer {
 
+    Logger log = LoggerFactory.getLogger(MinioInitializer.class);
     private final MinioClient minioClient;
 
     public MinioInitializer(MinioClient minioClient) {
@@ -29,8 +32,9 @@ public class MinioInitializer {
             minioClient.makeBucket(
                     MakeBucketArgs.builder().bucket(bucketName).build()
             );
-            System.out.println("Bucket created: " + bucketName);
-        }
+            log.info("Bucket {} created", bucketName);
+        } else
+          log.info("Bucket {} already exists", bucketName);
     }
 }
 
