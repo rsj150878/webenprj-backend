@@ -1,20 +1,22 @@
 package at.fhtw.webenprjbackend.service;
 
-import at.fhtw.webenprjbackend.dto.*;
-import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
-import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
-import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
-import at.fhtw.webenprjbackend.dto.UserResponse;
-import at.fhtw.webenprjbackend.entity.User;
-import at.fhtw.webenprjbackend.entity.Role;
-import at.fhtw.webenprjbackend.repository.UserRepository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+
+import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
+import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
+import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
+import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
+import at.fhtw.webenprjbackend.dto.UserResponse;
+import at.fhtw.webenprjbackend.entity.Role;
+import at.fhtw.webenprjbackend.entity.User;
+import at.fhtw.webenprjbackend.repository.UserRepository;
 
 // TODO: Add Salutation
 // TODO: Flyway migration cleartext PW -> with BCrypt only works for new registered users!!
@@ -51,9 +53,9 @@ public class UserService {
         User newUser = new User(
                 request.getEmail(),
                 request.getUsername(),
-                request.getPassword(), //TODO: Hash password before storing
+                passwordEncoder.encode(request.getPassword()),
                 request.getCountryCode(),
-                DEFAULT_PROFILE_IMAGE,
+                request.hasProfileImage() ? request.getProfileImageUrl() : DEFAULT_PROFILE_IMAGE,
                 Role.USER
         );
 
@@ -107,7 +109,7 @@ public class UserService {
     }
 
 
-    // ======================== Self-Service for loggted in users ========================
+    // ======================== Self-Service for logged in users ========================
     public UserResponse getCurrentUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
