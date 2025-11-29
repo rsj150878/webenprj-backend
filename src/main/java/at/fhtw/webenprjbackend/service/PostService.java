@@ -11,11 +11,10 @@ import org.springframework.web.server.ResponseStatusException;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
-import at.fhtw.webenprjbackend.entity.User;
-import at.fhtw.webenprjbackend.repository.UserRepository;
 import at.fhtw.webenprjbackend.entity.Post;
+import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.PostRepository;
-
+import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
  * Service layer for post operations.
@@ -69,17 +68,10 @@ public class PostService {
         return mapToResponse(saved);
     }
 
-    public PostResponse updatePost(UUID id, PostUpdateRequest request, UUID currentUserId,
-                                   boolean isAdmin) {
+    public PostResponse updatePost(UUID id, PostUpdateRequest request) {
         Post existing = postRepository.findById(id)
-                .orElseThrow(   () ->
+                .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-
-
-        if (!isAdmin && !existing.getUser().getId().equals(currentUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to edit this post");
-        }
-
 
         if (request.getSubject() != null) {
             String normalizedSubject = request.getSubject().startsWith("#")
@@ -99,6 +91,15 @@ public class PostService {
         Post saved = postRepository.save(existing);
         return mapToResponse(saved);
     }
+
+    public void deletePost(UUID id) {
+        Post existing = postRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+        postRepository.delete(existing);
+    }
+
 
 
     public void deletePost(UUID id, UUID currentUserId, boolean isAdmin) {
