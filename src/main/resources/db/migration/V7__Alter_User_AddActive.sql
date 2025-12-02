@@ -1,0 +1,1 @@
+alter table users add active tinyint(1) default(1);

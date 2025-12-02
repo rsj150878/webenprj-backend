@@ -15,7 +15,7 @@ RUN mvn dependency:go-offline -DskipTests
 COPY src ./src
 
 # Tests überspringen, damit DB-Verbindung beim Build nicht erforderlich ist
-RUN mvn clean package -DskipTests
+RUN mvn clean install package -DskipTests
 
 # ===============================
 # Runtime Stage
