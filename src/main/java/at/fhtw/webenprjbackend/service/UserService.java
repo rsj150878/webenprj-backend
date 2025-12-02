@@ -53,9 +53,9 @@ public class UserService {
         User newUser = new User(
                 request.getEmail(),
                 request.getUsername(),
-                request.getPassword(), //TODO: Hash password before storing
+                passwordEncoder.encode(request.getPassword()),
                 request.getCountryCode(),
-                DEFAULT_PROFILE_IMAGE,
+                request.hasProfileImage() ? request.getProfileImageUrl() : DEFAULT_PROFILE_IMAGE,
                 Role.USER
         );
 
