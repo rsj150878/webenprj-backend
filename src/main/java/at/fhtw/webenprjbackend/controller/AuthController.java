@@ -1,11 +1,10 @@
 package at.fhtw.webenprjbackend.controller;
 
 import at.fhtw.webenprjbackend.service.AuthService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import at.fhtw.webenprjbackend.dto.LoginRequest;
 import at.fhtw.webenprjbackend.dto.LoginResponse;
@@ -28,6 +27,7 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
+    private final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/login")
     @Operation(
@@ -80,7 +80,12 @@ public class AuthController {
             )
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+
+        logger.info("Received login request {}", request.getLogin());
         LoginResponse response = authService.login(request);
+        logger.info("Received login response {}", response);
         return ResponseEntity.ok(response);
     }
+
+
 }

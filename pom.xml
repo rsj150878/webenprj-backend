@@ -1,305 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
-    <!-- ===============================
-         Parent Configuration
-         =============================== -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.8</version>
-        <relativePath/>
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    
-    <!-- ===============================
-         Project Information
-         =============================== -->
     <groupId>at.fhtw</groupId>
     <artifactId>webenprjbackend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Motivise Study Platform Backend</name>
-    <description>REST API backend for the Motivise study micro-blogging platform</description>
-    
-    <!-- ===============================
-         Properties
-         =============================== -->
+    <name>webenprjbackend</name>
+    <description>Demo project for Spring Boot</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
     <properties>
         <java.version>21</java.version>
-        <maven.compiler.release>21</maven.compiler.release>
-        <jwt.version>0.12.5</jwt.version>
-        <springdoc.version>2.2.0</springdoc.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lombok.version>1.18.42</lombok.version>
+        <minio.version>8.5.13</minio.version>
     </properties>
-    
-    <!-- ===============================
-         Dependencies
-         =============================== -->
     <dependencies>
-        
-        <!-- Spring Boot Core Starters -->
+        <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        
-        <!-- Database Management -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
-        
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
+
         </dependency>
-        
-        <!-- Database Drivers -->
+        <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
-        
-        <!-- API Documentation -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>${springdoc.version}</version>
-        </dependency>
-        
-        <!-- JWT Authentication -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>${jwt.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>${jwt.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>${jwt.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <!-- Testing Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.2.0</version>
         </dependency>
+
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- JWT (io.jsonwebtoken) -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.5</version>
+            <scope>runtime</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>${minio.version}</version>
+        </dependency>
+
+
+
 
     </dependencies>
 
-    <!-- ===============================
-         Build Configuration
-         =============================== -->
     <build>
         <plugins>
-            
-            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
             </plugin>
-            
-            <!-- JaCoCo Test Coverage -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.11</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>check</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <rule>
-                                    <element>PACKAGE</element>
-                                    <limits>
-                                        <limit>
-                                            <counter>LINE</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.50</minimum>
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <!-- Maven Compiler Plugin with Release Option -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <release>${maven.compiler.release}</release>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                    <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
-                </configuration>
-            </plugin>
-            
-            <!-- Surefire Plugin for Better Test Reports -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.2</version>
-                <configuration>
-                    <useSystemClassLoader>false</useSystemClassLoader>
-                </configuration>
-            </plugin>
-            
         </plugins>
     </build>
-    
-    <!-- ===============================
-         Profiles for Different Environments
-         =============================== -->
-    <profiles>
-        <profile>
-            <id>dev</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <spring.profiles.active>dev</spring.profiles.active>
-            </properties>
-        </profile>
-        
-        <profile>
-            <id>test</id>
-            <properties>
-                <spring.profiles.active>test</spring.profiles.active>
-            </properties>
-        </profile>
-        
-        <profile>
-            <id>prod</id>
-            <properties>
-                <spring.profiles.active>prod</spring.profiles.active>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <release>${maven.compiler.release}</release>
-                            <encoding>${project.build.sourceEncoding}</encoding>
-                            <compilerArgs>
-                                <arg>-Xlint:all</arg>
-                                <arg>-Xlint:-processing</arg>
-                                <arg>-Werror</arg>
-                            </compilerArgs>
-                            <showWarnings>true</showWarnings>
-                            <showDeprecation>true</showDeprecation>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <useSystemClassLoader>false</useSystemClassLoader>
-                            <!-- No preview features in prod tests -->
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        
-        <!-- Strict Profile for Extra Validation -->
-        <profile>
-            <id>strict</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <release>${maven.compiler.release}</release>
-                            <encoding>${project.build.sourceEncoding}</encoding>
-                            <compilerArgs>
-                                <arg>-Xlint:all</arg>
-                                <arg>-Xlint:-processing</arg>
-                                <arg>-Werror</arg>
-                                <arg>-Xdoclint:all</arg>
-                                <arg>-Xdoclint:-missing</arg>
-                            </compilerArgs>
-                            <showWarnings>true</showWarnings>
-                            <showDeprecation>true</showDeprecation>
-                            <failOnWarning>true</failOnWarning>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-    
+
 </project>
