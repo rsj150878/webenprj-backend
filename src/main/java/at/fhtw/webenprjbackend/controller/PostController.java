@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,7 +44,6 @@ import jakarta.validation.Valid;
 @Tag(name = "Posts", description = "Study posts management - create, read, update, delete and search study updates")
 public class PostController {
 
-    private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String MEDIA_TYPE_JSON = "application/json";
 
     private final PostService postService;
@@ -56,16 +56,6 @@ public class PostController {
         this.postService = postService;
     }
 
-    /**
-     * Helper method to check if the authenticated user has admin role
-     * @param authentication The authentication object
-     * @return true if user is admin, false otherwise
-     */
-    private boolean isAdmin(Authentication authentication) {
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        return principal.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals(ROLE_ADMIN));
-    }
 
     // ===============================
     // GET Operations
@@ -254,14 +244,13 @@ public class PostController {
             )
         )
     })
+    @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Post', 'update')")
     public ResponseEntity<PostResponse> updatePost(
-            @Parameter(description = "Post UUID to update", required = true) 
+            @Parameter(description = "Post UUID to update", required = true)
             @PathVariable UUID id,
-            @Valid @RequestBody PostUpdateRequest request,
-            Authentication authentication) {
+            @Valid @RequestBody PostUpdateRequest request) {
 
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        PostResponse updated = postService.updatePost(id, request, principal.getId(), isAdmin(authentication));
+        PostResponse updated = postService.updatePost(id, request);
         return ResponseEntity.ok(updated);
     }
 
@@ -314,13 +303,12 @@ public class PostController {
             )
         )
     })
+    @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Post', 'delete')")
     public ResponseEntity<Void> deletePost(
-            @Parameter(description = "Post UUID to delete", required = true) 
-            @PathVariable UUID id,
-            Authentication authentication) {
+            @Parameter(description = "Post UUID to delete", required = true)
+            @PathVariable UUID id) {
 
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        postService.deletePost(id, principal.getId(), isAdmin(authentication));
+        postService.deletePost(id);
         return ResponseEntity.noContent().build();
     }
 }

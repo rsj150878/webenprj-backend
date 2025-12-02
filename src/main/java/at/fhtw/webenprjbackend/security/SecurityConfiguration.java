@@ -2,6 +2,9 @@ package at.fhtw.webenprjbackend.security;
 
 import java.util.Arrays;
 
+import at.fhtw.webenprjbackend.security.jwt.JwtAuthenticationFilter;
+import at.fhtw.webenprjbackend.security.jwt.JwtDecoder;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -42,9 +45,9 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtDecoder jwtDecoder,
                                                            CustomUserDetailsService userDetailsService) {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+        return new JwtAuthenticationFilter(jwtDecoder, userDetailsService);
     }
 
     @Bean
