@@ -1,17 +1,20 @@
 @echo off
-REM ===============================
-REM TEST-ONLY MODE
-REM Bulletproof isolated testing without external dependencies
-REM ===============================
+echo.
+echo ===============================
+echo   TEST MODE
+echo   Isolated Testing Environment
+echo ===============================
+echo.
 
-echo [TEST-ONLY] Starting bulletproof testing environment...
-echo [TEST-ONLY] Pure in-memory testing - completely isolated!
+echo [TEST] Starting isolated testing environment...
+echo [TEST] Using in-memory H2 database (completely isolated)
+echo.
 
 REM Set environment for test-isolated mode
 set SPRING_PROFILES_ACTIVE=test-isolated
 
 REM Clean and run tests with coverage
-echo [TEST-ONLY] Cleaning previous test results...
+echo [TEST] Cleaning previous test results...
 call mvnw.cmd clean -Ptest-isolated
 
 if errorlevel 1 (
@@ -20,17 +23,19 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [TEST-ONLY] Running tests with coverage reporting...
+echo [TEST] Running tests with coverage reporting...
 call mvnw.cmd test -Ptest-isolated
 
 if errorlevel 1 (
+    echo.
     echo [ERROR] Tests failed!
     echo [ERROR] Check test output above for details
+    echo.
     pause
     exit /b 1
 )
 
-echo [TEST-ONLY] Generating coverage report...
+echo [TEST] Generating coverage report...
 call mvnw.cmd jacoco:report -Ptest-isolated
 
 if errorlevel 1 (
@@ -38,9 +43,12 @@ if errorlevel 1 (
 )
 
 echo.
+echo ===============================
+echo   TEST RESULTS
+echo ===============================
 echo [SUCCESS] All tests passed!
-echo [INFO] Coverage report generated at: target\site\jacoco\index.html
-echo [INFO] Test results available in: target\surefire-reports\
+echo [INFO] Coverage report: target\site\jacoco\index.html
+echo [INFO] Test results: target\surefire-reports\
 echo.
 
 REM Try to open coverage report if it exists
@@ -51,4 +59,5 @@ if exist "target\site\jacoco\index.html" (
     echo [WARNING] Coverage report not found at expected location
 )
 
+echo.
 pause
