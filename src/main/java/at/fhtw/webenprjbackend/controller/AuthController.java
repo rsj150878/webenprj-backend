@@ -27,7 +27,6 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
-    private final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/login")
     @Operation(
@@ -81,9 +80,7 @@ public class AuthController {
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
 
-        logger.info("Received login request {}", request.getLogin());
         LoginResponse response = authService.login(request);
-        logger.info("Received login response {}", response);
         return ResponseEntity.ok(response);
     }
 
