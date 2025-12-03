@@ -97,6 +97,7 @@ cd webenprj-backend
 - **JDBC URL**: `jdbc:h2:mem:motivise_dev`
 - **Username**: `sa`
 - **Password**: (leave empty)
+- **Note**: ⚡ In-memory only - data is reset on each restart
 
 ### 📊 Test Coverage Reports
 After running `./test.cmd coverage`:
