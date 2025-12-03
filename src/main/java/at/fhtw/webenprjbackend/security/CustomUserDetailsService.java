@@ -26,6 +26,11 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .or(() -> userRepository.findByUsername(login))
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid login or password"));
 
+        // Check if user account is active
+        if (!user.isActive()) {
+            throw new UsernameNotFoundException("User account is disabled");
+        }
+
         return UserPrincipal.fromUser(user);
     }
 

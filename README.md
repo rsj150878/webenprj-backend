@@ -25,6 +25,31 @@ Optional "study streaks" show how many days in a row a user has been learning.
 - **Docker Desktop** (for production mode only)
 - **Git** for cloning the repository
 
+### 🔐 Security Setup (IMPORTANT - First Time Setup)
+
+**Before running the application**, you must configure environment variables for security:
+
+```bash
+# 1. Copy the environment template
+cp .env.example .env
+
+# 2. Generate a strong JWT secret (on macOS/Linux)
+openssl rand -base64 32
+
+# 3. Edit .env file and replace JWT_SECRET_KEY with the generated value
+# Example: JWT_SECRET_KEY=AhCJ4lNWxhr+bha4JNNtECAXvE41JLADJ5AqydXhBew=
+```
+
+**⚠️ NEVER commit .env file to version control!** (Already in .gitignore)
+
+The `.env` file contains:
+- `JWT_SECRET_KEY` - Secure secret for JWT token signing (REQUIRED)
+- `JWT_EXPIRATION_MS` - Token expiration time in milliseconds
+- `DB_PASSWORD` - Database password for production mode
+- Other configuration values
+
+**Note:** Development mode (`docker-free`) has safe defaults, but production requires all secrets to be set explicitly.
+
 ### 🛠️ Development Mode (Recommended for coding)
 
 **Super fast startup, no Docker needed!**

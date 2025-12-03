@@ -52,10 +52,7 @@ public class PostService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // Normalize subject (remove leading # before saving)
-        String normalizedSubject = request.getSubject().startsWith("#")
-                ? request.getSubject().substring(1)
-                : request.getSubject();
+        String normalizedSubject = normalizeSubject(request.getSubject());
 
         Post post = new Post(
                 normalizedSubject,
@@ -74,10 +71,7 @@ public class PostService {
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
         if (request.getSubject() != null) {
-            String normalizedSubject = request.getSubject().startsWith("#")
-                    ? request.getSubject().substring(1)
-                    : request.getSubject();
-            existing.setSubject(normalizedSubject);
+            existing.setSubject(normalizeSubject(request.getSubject()));
         }
 
         if (request.getContent() != null) {
@@ -131,13 +125,25 @@ public class PostService {
     }
 
     public List<PostResponse> searchBySubject(String subject) {
-        String normalized = subject.startsWith("#")
-                ? subject.substring(1)
-                : subject;
+        String normalized = normalizeSubject(subject);
         List<Post> posts = postRepository.findBySubjectIgnoreCase(normalized);
         return posts.stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    /**
+     * Normalizes subject by removing leading # if present.
+     * This ensures consistency in database storage while allowing frontend to display with #.
+     *
+     * @param subject the subject to normalize
+     * @return normalized subject without leading #
+     */
+    private String normalizeSubject(String subject) {
+        if (subject == null) {
+            return null;
+        }
+        return subject.startsWith("#") ? subject.substring(1) : subject;
     }
 
     private PostResponse mapToResponse(Post post) {
