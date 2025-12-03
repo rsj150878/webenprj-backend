@@ -86,27 +86,160 @@ public class SecurityConfiguration {
                     auth.anyRequest().authenticated();
                 });
 
-        // Simple headers configuration for development modes
-        if (isDevelopmentMode) {
-            http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
-        }
+        // Security Headers Configuration
+        configureSecurityHeaders(http, isDevelopmentMode);
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    /**
+     * Configures comprehensive security headers for the application.
+     * Different configurations for development vs production environments.
+     *
+     * @param http the HttpSecurity to configure
+     * @param isDevelopmentMode whether the application is running in development mode
+     */
+    private void configureSecurityHeaders(HttpSecurity http, boolean isDevelopmentMode) throws Exception {
+        http.headers(headers -> {
+            // X-Frame-Options: Prevents clickjacking attacks
+            if (isDevelopmentMode) {
+                // Development: Allow same-origin frames (needed for H2 console)
+                headers.frameOptions(frameOptions -> frameOptions.sameOrigin());
+            } else {
+                // Production: Deny all framing
+                headers.frameOptions(frameOptions -> frameOptions.deny());
+            }
+
+            // X-Content-Type-Options: Prevents MIME type sniffing
+            // Forces browsers to respect the declared Content-Type
+            headers.contentTypeOptions(contentTypeOptions -> contentTypeOptions.disable());
+
+            // X-XSS-Protection: Legacy XSS protection (mostly replaced by CSP)
+            // Modern browsers use CSP, but this adds defense-in-depth
+            headers.xssProtection(xss -> xss.headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK));
+
+            // HTTP Strict Transport Security (HSTS)
+            // Forces HTTPS connections for enhanced security
+            if (!isDevelopmentMode) {
+                headers.httpStrictTransportSecurity(hsts -> hsts
+                        .includeSubDomains(true)           // Apply to all subdomains
+                        .maxAgeInSeconds(31536000)          // 1 year
+                        .preload(true)                      // Allow preload list submission
+                );
+            }
+            // Note: HSTS disabled in development to allow HTTP testing
+
+            // Content Security Policy (CSP)
+            // Prevents XSS attacks by controlling resource loading
+            if (isDevelopmentMode) {
+                // Development: More permissive to allow dev tools
+                headers.contentSecurityPolicy(csp -> csp
+                        .policyDirectives(
+                                "default-src 'self'; " +
+                                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +  // Swagger needs unsafe-inline
+                                "style-src 'self' 'unsafe-inline'; " +                 // Swagger needs unsafe-inline
+                                "img-src 'self' data: https:; " +                      // Allow data: URIs and external images
+                                "font-src 'self' data:; " +
+                                "frame-ancestors 'self'"                               // Allow same-origin framing
+                        )
+                );
+            } else {
+                // Production: Strict policy
+                headers.contentSecurityPolicy(csp -> csp
+                        .policyDirectives(
+                                "default-src 'self'; " +
+                                "script-src 'self'; " +
+                                "style-src 'self'; " +
+                                "img-src 'self' data: https:; " +
+                                "font-src 'self'; " +
+                                "frame-ancestors 'none'; " +                           // No framing allowed
+                                "base-uri 'self'; " +
+                                "form-action 'self'"
+                        )
+                );
+            }
+
+            // Referrer-Policy: Controls referrer information sent with requests
+            // "strict-origin-when-cross-origin" balances privacy and functionality
+            headers.referrerPolicy(referrer -> referrer
+                    .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+            );
+
+            // Permissions-Policy: Controls browser features and APIs
+            // Disables unnecessary features to reduce attack surface
+            headers.permissionsPolicy(permissions -> permissions
+                    .policy("geolocation=(), " +          // Disable geolocation
+                           "microphone=(), " +            // Disable microphone
+                           "camera=(), " +                // Disable camera
+                           "payment=(), " +               // Disable payment APIs
+                           "usb=(), " +                   // Disable USB
+                           "magnetometer=(), " +          // Disable sensors
+                           "gyroscope=(), " +
+                           "accelerometer=()")
+            );
+
+            // Cache-Control: Prevent sensitive data caching
+            headers.cacheControl(cache -> cache.disable());
+        });
+    }
+
+    /**
+     * Configures CORS (Cross-Origin Resource Sharing) settings.
+     * Allows the frontend application to communicate with the backend API.
+     *
+     * Security Notes:
+     * - allowCredentials=true allows cookies and Authorization headers
+     * - Specific origins are whitelisted (no wildcards for security)
+     * - Only necessary HTTP methods are allowed
+     *
+     * @return configured CORS configuration source
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Frontend URLs
-        config.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:5176"
-        ));
+
+        // Check for development mode
+        boolean isDevelopmentMode = Arrays.asList(environment.getActiveProfiles())
+            .stream()
+            .anyMatch(profile -> profile.equals("dev") || profile.equals("docker-free"));
+
+        if (isDevelopmentMode) {
+            // Development: Allow common local development ports
+            config.setAllowedOrigins(List.of(
+                    "http://localhost:3000",      // React default
+                    "http://localhost:5173",      // Vite default
+                    "http://localhost:5176",      // Vite alternative port
+                    "http://localhost:8080"       // Common alternative
+            ));
+        } else {
+            // Production: Use environment variable for frontend URL
+            // Set CORS_ALLOWED_ORIGINS in .env file
+            String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+            if (allowedOrigins != null && !allowedOrigins.isBlank()) {
+                config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+            } else {
+                // Fallback to restrictive default
+                config.setAllowedOrigins(List.of("https://motivise.app"));
+            }
+        }
+
+        // Allow necessary HTTP methods
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+        // Allow necessary headers (Authorization for JWT, Content-Type for JSON)
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+
+        // Expose headers that frontend can read
+        config.setExposedHeaders(List.of("Authorization"));
+
+        // Allow credentials (cookies, authorization headers)
+        // Required for JWT token authentication
         config.setAllowCredentials(true);
+
+        // Cache preflight requests for 1 hour to reduce overhead
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
