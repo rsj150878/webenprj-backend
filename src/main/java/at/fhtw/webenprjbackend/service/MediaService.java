@@ -1,24 +1,25 @@
 package at.fhtw.webenprjbackend.service;
 
-import at.fhtw.webenprjbackend.entity.Media;
-import at.fhtw.webenprjbackend.filestorage.FileStorage;
-import at.fhtw.webenprjbackend.repository.MediaRepository;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import java.io.InputStream;
+import java.util.UUID;
+
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
-import java.util.UUID;
+import at.fhtw.webenprjbackend.entity.Media;
+import at.fhtw.webenprjbackend.filestorage.FileStorage;
+import at.fhtw.webenprjbackend.repository.MediaRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 
 public class MediaService {
 
-    private final MediaRepository mediaRepositoryRepository;
+    private final MediaRepository mediaRepository;
     private final FileStorage fileStorage;
 
     public Media upload(MultipartFile toUpload) {
@@ -29,11 +30,11 @@ public class MediaService {
         cover.setExternalId(externalId);
         cover.setContentType(toUpload.getContentType());
 
-        return mediaRepositoryRepository.save(cover);
+        return mediaRepository.save(cover);
     }
 
     public Media findById(UUID id) {
-        return mediaRepositoryRepository.findById(id)
+        return mediaRepository.findById(id)
                 .orElseThrow(EntityNotFoundException::new);
     }
 

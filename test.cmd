@@ -1,95 +1,63 @@
 @echo off
 echo.
 echo ===============================
-echo   Motivise Testing Suite
+echo   TEST MODE
+echo   Isolated Testing Environment
 echo ===============================
+echo.
 
-if "%1"=="coverage" (
-    echo Running all tests with coverage report
-    echo Step 1: Running tests...
-    mvnw clean test
-    echo Step 2: Generating coverage report...
-    mvnw jacoco:report
+echo [TEST] Starting isolated testing environment...
+echo [TEST] Using in-memory H2 database (completely isolated)
+echo.
+
+REM Set environment for test-isolated mode
+set SPRING_PROFILES_ACTIVE=test-isolated
+
+REM Clean and run tests with coverage
+echo [TEST] Cleaning previous test results...
+call mvnw.cmd clean -Ptest-isolated
+
+if errorlevel 1 (
+    echo [ERROR] Clean failed!
+    pause
+    exit /b 1
+)
+
+echo [TEST] Running tests with coverage reporting...
+call mvnw.cmd test -Ptest-isolated
+
+if errorlevel 1 (
     echo.
-    echo Coverage report generated!
-    echo View report: target\site\jacoco\index.html
-    echo Or via Spring Boot: http://localhost:8081/coverage/ ^(if server running^)
+    echo [ERROR] Tests failed!
+    echo [ERROR] Check test output above for details
     echo.
     pause
-    goto :end
+    exit /b 1
 )
 
-if "%1"=="unit" (
-    echo Running only unit tests ^(DTO + Service^)
-    mvnw test -Dtest="**/dto/*Test,**/service/*Test"
-    goto :end
+echo [TEST] Generating coverage report...
+call mvnw.cmd jacoco:report -Ptest-isolated
+
+if errorlevel 1 (
+    echo [WARNING] Coverage report generation had issues, but tests passed
 )
 
-if "%1"=="integration" (
-    echo Running only integration tests
-    mvnw test -Dtest="**/integration/*Test"
-    goto :end
-)
-
-if "%1"=="specific" (
-    if "%2"=="" (
-        echo Usage: test.cmd specific TestClassName
-        echo Example: test.cmd specific PostServiceTest
-        goto :end
-    )
-    echo Running specific test: %2
-    mvnw test -Dtest=%2
-    goto :end
-)
-
-if "%1"=="quick" (
-    echo Running quick test suite ^(no coverage^)
-    mvnw test -DfailIfNoTests=false
-    goto :end
-)
-
-if "%1"=="report" (
-    echo Generating coverage report from existing test data
-    mvnw jacoco:report
-    echo.
-    echo Coverage report generated!
-    echo View report: target\site\jacoco\index.html
-    echo.
-    goto :end
-)
-
-if "%1"=="strict" (
-    echo Running tests with strict validation
-    mvnw test -Pstrict
-    goto :end
-)
-
-if "%1"=="help" (
-    goto :help
-)
-
-if "%1"=="" (
-    echo Running all tests
-    mvnw test
-    goto :end
-)
-
-:help
 echo.
-echo Test Commands:
-echo.
-echo   test.cmd              - Run all tests
-echo   test.cmd coverage     - Run tests + generate coverage report
-echo   test.cmd report       - Generate coverage report ^(from existing test data^)
-echo   test.cmd unit         - Run only unit tests ^(DTO/Service^)
-echo   test.cmd integration  - Run only integration tests
-echo   test.cmd quick        - Fast test run ^(no coverage^)
-echo   test.cmd strict       - Run with strict validation
-echo   test.cmd specific TestClassName - Run specific test
-echo   test.cmd help         - Show this help
-echo.
-echo Coverage report location: target\site\jacoco\index.html
-echo Test reports: target\surefire-reports\
+echo ===============================
+echo   TEST RESULTS
+echo ===============================
+echo [SUCCESS] All tests passed!
+echo [INFO] Coverage report: target\site\jacoco\index.html
+echo [INFO] Test results: target\surefire-reports\
 echo.
 
-:end
+REM Try to open coverage report if it exists
+if exist "target\site\jacoco\index.html" (
+    echo [INFO] Opening coverage report in default browser...
+    start "" "target\site\jacoco\index.html"
+) else (
+    echo [WARNING] Coverage report not found at expected location
+)
+
+echo.
+pause
