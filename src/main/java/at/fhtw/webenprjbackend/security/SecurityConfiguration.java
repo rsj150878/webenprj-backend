@@ -3,9 +3,6 @@ package at.fhtw.webenprjbackend.security;
 import java.util.Arrays;
 import java.util.List;
 
-import at.fhtw.webenprjbackend.security.jwt.JwtAuthenticationFilter;
-import at.fhtw.webenprjbackend.security.jwt.JwtDecoder;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -21,10 +18,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import at.fhtw.webenprjbackend.security.jwt.JwtAuthenticationFilter;
+import at.fhtw.webenprjbackend.security.jwt.JwtDecoder;
 
 @Configuration
 @EnableWebSecurity
@@ -60,34 +59,35 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationFilter jwtFilter) throws Exception {
 
-        boolean isDevProfile = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-
-        // Simple CSRF configuration
-
-        http.csrf(AbstractHttpConfigurer::disable);
+        // Check for development profiles (dev OR docker-free)
+        boolean isDevelopmentMode = Arrays.asList(environment.getActiveProfiles())
+            .stream()
+            .anyMatch(profile -> profile.equals("dev") || profile.equals("docker-free"));
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authorizeHttpRequests(auth -> {
-                auth
-                    .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/users").permitAll();
-                    
-                if (isDevProfile) {
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> {
                     auth
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll();
-                }
-                
-                auth.anyRequest().authenticated();
-            });
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users").permitAll();
+                        
+                    // Allow development tools in both dev and docker-free modes
+                    if (isDevelopmentMode) {
+                        auth
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
+                            .requestMatchers("/h2-console/**").permitAll()
+                            .requestMatchers("/actuator/**").permitAll();
+                    }
+                    
+                    auth.anyRequest().authenticated();
+                });
 
-        // Simple headers configuration
-        if (isDevProfile) {
+        // Simple headers configuration for development modes
+        if (isDevelopmentMode) {
             http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
         }
 
@@ -99,7 +99,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Hier eure Frontend-URL(s) eintragen:
+        // Frontend URLs
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:5176"
