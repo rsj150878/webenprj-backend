@@ -44,7 +44,7 @@ echo ===============================
 echo Server:           http://localhost:8081
 echo API Docs:         http://localhost:8081/swagger-ui/index.html
 echo H2 Console:       http://localhost:8081/h2-console
-echo   JDBC URL:       jdbc:h2:file:./h2-data/motivise_dev
+echo   JDBC URL:       jdbc:h2:mem:motivise_dev
 echo   Username:       sa
 echo   Password:       ^(empty^)
 echo Actuator Health:  http://localhost:8081/actuator/health
@@ -63,7 +63,7 @@ echo.
 echo ===============================
 echo   DEVELOPMENT NOTES
 echo ===============================
-echo - Database persists between restarts
+echo - In-memory database ^(no persistence^)
 echo - No Docker dependencies required
 echo - No testing constraints
 echo - Perfect for rapid development
