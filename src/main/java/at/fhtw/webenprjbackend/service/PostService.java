@@ -17,8 +17,32 @@ import at.fhtw.webenprjbackend.repository.PostRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
- * Service layer for post operations.
- * Part of the Motivise study blogging platform backend.
+ * Service layer for managing study posts in the Motivise platform.
+ *
+ * <p>This service handles all business logic related to study posts including:
+ * <ul>
+ *   <li>Creating new posts with automatic subject normalization</li>
+ *   <li>Retrieving posts (all, by ID, or filtered by search)</li>
+ *   <li>Updating existing posts with ownership validation at controller layer</li>
+ *   <li>Deleting posts with authorization handled via Spring Security</li>
+ *   <li>Searching posts by content keywords</li>
+ * </ul>
+ *
+ * <p><b>Design Decisions:</b>
+ * <ul>
+ *   <li><b>Subject Normalization:</b> Posts are stored without leading '#' in the database
+ *       for consistency, but the '#' is added back in responses for frontend display.
+ *       This allows flexible frontend rendering while maintaining clean data storage.</li>
+ *   <li><b>Authorization:</b> Post ownership and permission checks are performed at the
+ *       controller layer using Spring Security's @PreAuthorize annotations, keeping
+ *       service methods focused on business logic rather than security concerns.</li>
+ *   <li><b>User Association:</b> Posts maintain a mandatory relationship with their author
+ *       to support features like user profiles and content moderation.</li>
+ * </ul>
+ *
+ * @see Post
+ * @see PostRepository
+ * @see PostController
  */
 @Service
 public class PostService {
@@ -52,10 +76,7 @@ public class PostService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // Normalize subject (remove leading # before saving)
-        String normalizedSubject = request.getSubject().startsWith("#")
-                ? request.getSubject().substring(1)
-                : request.getSubject();
+        String normalizedSubject = normalizeSubject(request.getSubject());
 
         Post post = new Post(
                 normalizedSubject,
@@ -74,10 +95,7 @@ public class PostService {
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
         if (request.getSubject() != null) {
-            String normalizedSubject = request.getSubject().startsWith("#")
-                    ? request.getSubject().substring(1)
-                    : request.getSubject();
-            existing.setSubject(normalizedSubject);
+            existing.setSubject(normalizeSubject(request.getSubject()));
         }
 
         if (request.getContent() != null) {
@@ -92,23 +110,20 @@ public class PostService {
         return mapToResponse(saved);
     }
 
+    /**
+     * Deletes a post by its ID.
+     *
+     * <p><b>Authorization Note:</b> Authorization checks (user owns post OR is admin)
+     * are handled at the controller layer via @PreAuthorize annotation.
+     * This service method assumes the caller has already been authorized.
+     *
+     * @param id the UUID of the post to delete
+     * @throws ResponseStatusException with NOT_FOUND status if post doesn't exist
+     */
     public void deletePost(UUID id) {
         Post existing = postRepository.findById(id)
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-
-        postRepository.delete(existing);
-    }
-
-
-
-    public void deletePost(UUID id, UUID currentUserId, boolean isAdmin) {
-        Post existing = postRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-
-        if (!isAdmin && !existing.getUser().getId().equals(currentUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this post");
-        }
 
         postRepository.delete(existing);
     }
@@ -131,19 +146,54 @@ public class PostService {
     }
 
     public List<PostResponse> searchBySubject(String subject) {
-        String normalized = subject.startsWith("#")
-                ? subject.substring(1)
-                : subject;
+        String normalized = normalizeSubject(subject);
         List<Post> posts = postRepository.findBySubjectIgnoreCase(normalized);
         return posts.stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    /**
+     * Normalizes subject by removing leading '#' if present.
+     *
+     * <p>This ensures consistency in database storage while allowing frontend to display with '#'.
+     * The hashtag symbol is cosmetic for UI display - we store subjects without it to:
+     * <ul>
+     *   <li>Simplify database searches and filtering</li>
+     *   <li>Avoid duplicate symbols if users accidentally include it</li>
+     *   <li>Allow flexible frontend rendering (with or without '#')</li>
+     *   <li>Maintain clean, normalized data in the persistence layer</li>
+     * </ul>
+     *
+     * @param subject the subject to normalize (may or may not start with '#')
+     * @return normalized subject without leading '#', or null if input is null
+     */
+    private String normalizeSubject(String subject) {
+        if (subject == null) {
+            return null;
+        }
+        return subject.startsWith("#") ? subject.substring(1) : subject;
+    }
+
+    /**
+     * Converts a Post entity to a PostResponse DTO for API responses.
+     *
+     * <p>This method adds the '#' prefix back to the subject for frontend display,
+     * reversing the normalization performed during post creation/update.
+     * This separation of concerns allows:
+     * <ul>
+     *   <li>Clean data storage (no special characters in database)</li>
+     *   <li>Consistent UI display (always shows '#' to users)</li>
+     *   <li>Flexibility for future UI changes without database migrations</li>
+     * </ul>
+     *
+     * @param post the Post entity to convert
+     * @return PostResponse DTO with '#' prepended to subject
+     */
     private PostResponse mapToResponse(Post post) {
         return new PostResponse(
                 post.getId(),
-                "#" + post.getSubject(), // for Frontend pretty with #
+                "#" + post.getSubject(), // Add '#' for frontend display
                 post.getContent(),
                 post.getImageUrl(),
                 post.getCreatedAt(),
