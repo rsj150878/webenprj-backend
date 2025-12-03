@@ -156,10 +156,10 @@
     </build>
 
     <!-- ===============================
-    BULLETPROOF PROFILES
+    MAVEN PROFILES
     =============================== -->
     <profiles>
-        <!-- Docker-Free Development Profile (Test-Free) -->
+        <!-- Quick Start Profile (H2 in-memory, no Docker) -->
         <profile>
             <id>docker-free</id>
             <properties>
@@ -210,7 +210,7 @@
             </build>
         </profile>
 
-        <!-- Test-Isolated Profile -->
+        <!-- Testing Profile (isolated H2 for tests) -->
         <profile>
             <id>test-isolated</id>
             <properties>
@@ -251,27 +251,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Production Profile (with all dependencies) -->
-        <profile>
-            <id>production</id>
-            <properties>
-                <spring.profiles.active>prod</spring.profiles.active>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-maven-plugin</artifactId>
-                        <configuration>
-                            <profiles>
-                                <profile>prod</profile>
-                            </profiles>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

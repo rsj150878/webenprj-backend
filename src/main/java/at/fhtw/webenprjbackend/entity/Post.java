@@ -1,9 +1,5 @@
 package at.fhtw.webenprjbackend.entity;
 
-// TODO: Consider switching to OffsetDateTime instead of LocalDateTime (storing timezone offset)
-// TODO: Consider adding status - publish visibility, DRAFT / PUBLISHED
-// TODO: Auditing (createdBy, modifiedBy) implementation
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 import jakarta.persistence.*;

@@ -67,8 +67,9 @@ echo.
 echo ===============================
 echo   NEXT STEPS
 echo ===============================
-echo For development:  docker-free.cmd
-echo For testing:      test-only.cmd
+echo For development:  start.cmd (MySQL/Docker)
+echo For quick start:  quick-start.cmd (H2, no Docker)
+echo For testing:      test.cmd
 echo For production:   Use docker-compose setup
 echo.
 echo Your environment is now bulletproof against:
