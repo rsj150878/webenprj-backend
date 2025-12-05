@@ -1,6 +1,5 @@
 package at.fhtw.webenprjbackend.service;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -15,7 +14,9 @@ import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
 import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.entity.User;
+import at.fhtw.webenprjbackend.repository.FollowRepository;
 import at.fhtw.webenprjbackend.repository.PostRepository;
+import at.fhtw.webenprjbackend.repository.PostLikeRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
@@ -52,21 +53,42 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostLikeRepository postLikeRepository;
+    private final FollowRepository followRepository;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository) {
+    public PostService(PostRepository postRepository, UserRepository userRepository,
+                       PostLikeRepository postLikeRepository, FollowRepository followRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.postLikeRepository = postLikeRepository;
+        this.followRepository = followRepository;
     }
 
-    public Page<PostResponse> getAllPosts(Pageable pageable) {
+    public Page<PostResponse> getAllPosts(Pageable pageable, UUID currentUserId) {
         return postRepository.findAllByOrderByCreatedAtDesc(pageable)
-                .map(this::mapToResponse);
+                .map(post -> mapToResponse(post, currentUserId));
     }
 
-    public PostResponse getPostById(UUID id) {
+    public Page<PostResponse> getFollowingPosts(Pageable pageable, UUID currentUserId) {
+        if (currentUserId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required for following feed");
+        }
+        User current = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        var follows = followRepository.findByFollower(current, Pageable.unpaged()).stream()
+                .map(f -> f.getFollowed().getId())
+                .toList();
+        if (follows.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return postRepository.findByUserIdInOrderByCreatedAtDesc(follows, pageable)
+                .map(post -> mapToResponse(post, currentUserId));
+    }
+
+    public PostResponse getPostById(UUID id, UUID currentUserId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-        return mapToResponse(post);
+        return mapToResponse(post, currentUserId);
     }
 
     @Transactional
@@ -85,7 +107,7 @@ public class PostService {
         );
 
         Post saved = postRepository.save(post);
-        return mapToResponse(saved);
+        return mapToResponse(saved, userId);
     }
 
     @Transactional
@@ -107,7 +129,7 @@ public class PostService {
         }
 
         Post saved = postRepository.save(existing);
-        return mapToResponse(saved);
+        return mapToResponse(saved, null);
     }
 
     /**
@@ -129,24 +151,22 @@ public class PostService {
         postRepository.delete(existing);
     }
 
-    public Page<PostResponse> searchPosts(String keyword, Pageable pageable) {
+    public Page<PostResponse> searchPosts(String keyword, Pageable pageable, UUID currentUserId) {
         if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllPosts(pageable);
+            return getAllPosts(pageable, currentUserId);
         }
         return postRepository.findByContentContainingIgnoreCase(keyword.trim(), pageable)
-                .map(this::mapToResponse);
+                .map(post -> mapToResponse(post, currentUserId));
     }
 
     public long getPostCount() {
         return postRepository.count();
     }
 
-    public List<PostResponse> searchBySubject(String subject) {
+    public Page<PostResponse> searchBySubject(String subject, Pageable pageable, UUID currentUserId) {
         String normalized = normalizeSubject(subject);
-        List<Post> posts = postRepository.findBySubjectIgnoreCase(normalized);
-        return posts.stream()
-                .map(this::mapToResponse)
-                .toList();
+        return postRepository.findBySubjectIgnoreCase(normalized, pageable)
+                .map(post -> mapToResponse(post, currentUserId));
     }
 
     /**
@@ -186,7 +206,12 @@ public class PostService {
      * @param post the Post entity to convert
      * @return PostResponse DTO with '#' prepended to subject
      */
-    private PostResponse mapToResponse(Post post) {
+    private PostResponse mapToResponse(Post post, UUID currentUserId) {
+        long likeCount = postLikeRepository.countByPost(post);
+        boolean likedByCurrentUser = false;
+        if (currentUserId != null) {
+            likedByCurrentUser = postLikeRepository.existsByUserIdAndPostId(currentUserId, post.getId());
+        }
         return new PostResponse(
                 post.getId(),
                 "#" + post.getSubject(), // Add '#' for frontend display
@@ -195,7 +220,9 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getUpdatedAt(),
                 post.getUser().getId(),
-                post.getUser().getUsername()
+                post.getUser().getUsername(),
+                likeCount,
+                likedByCurrentUser
         );
     }
 }

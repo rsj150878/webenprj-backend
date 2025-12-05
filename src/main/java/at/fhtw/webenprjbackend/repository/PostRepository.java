@@ -26,9 +26,13 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
     Page<Post> findByContentContainingIgnoreCase(String keyword, Pageable pageable);
 
+    Page<Post> findBySubjectIgnoreCase(String subject, Pageable pageable);
+
     List<Post> findBySubjectIgnoreCase(String subject);
 
     List<Post> findByUser(User user);
+
+    Page<Post> findByUserIdInOrderByCreatedAtDesc(List<UUID> userIds, Pageable pageable);
 
 
 }
