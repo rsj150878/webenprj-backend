@@ -1,12 +1,16 @@
 package at.fhtw.webenprjbackend.controller;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -36,6 +40,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 
 /**
  * REST Controller for comprehensive user management in the Motivise platform.
@@ -49,6 +56,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/users")
 @Tag(name = "User Management", description = "Complete user lifecycle management - registration, profile updates, and admin operations")
+@Validated
 public class UserController {
 
     private static final String MEDIA_TYPE_JSON = "application/json";
@@ -234,21 +242,23 @@ public class UserController {
 
     @GetMapping
     @Operation(
-        summary = "Get all users (Admin only)",
-        description = "Retrieve a list of all registered users with their profile information. Requires admin privileges.",
+        summary = "Get all users or search users (Admin only)",
+        description = "Retrieve a list of all registered users or search users by email, username, or country code. " +
+                      "Use the 'search' query parameter to filter results. RESTful design: filtering via query parameters. " +
+                      "Requires admin privileges.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200", 
-            description = "Users list retrieved successfully",
+            responseCode = "200",
+            description = "Users list retrieved successfully (all users or search results)",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
                 array = @ArraySchema(schema = @Schema(implementation = UserResponse.class))
             )
         ),
         @ApiResponse(
-            responseCode = "403", 
+            responseCode = "403",
             description = "Admin privileges required",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
@@ -260,8 +270,23 @@ public class UserController {
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<Page<UserResponse>> getAllUsers(
+            @Parameter(
+                description = "Optional search query to filter users by email, username, or country code (case-insensitive)",
+                example = "anna",
+                required = false
+            )
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // RESTful approach: use query parameter to filter collection
+        if (search != null && !search.isBlank()) {
+            return ResponseEntity.ok(userService.adminSearchUsers(search, pageable));
+        }
+        return ResponseEntity.ok(userService.getAllUsers(pageable));
     }
 
     @GetMapping("/{id}")
@@ -408,32 +433,5 @@ public class UserController {
 
         UserResponse updated = userService.adminToggleActive(id, active);
         return ResponseEntity.ok(updated);
-    }
-
-    @GetMapping("/search")
-    @Operation(
-        summary = "Search users (Admin only)",
-        description = "Search users by email, username, or country code. Case-insensitive search. Requires admin privileges.",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200", 
-            description = "Search results retrieved (may be empty)",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                array = @ArraySchema(schema = @Schema(implementation = UserResponse.class))
-            )
-        ),
-        @ApiResponse(
-            responseCode = "403", 
-            description = "Admin privileges required"
-        )
-    })
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> searchUsers(
-            @Parameter(description = "Search query to find users by email, username, or country", required = true, example = "anna") 
-            @RequestParam("q") String query) {
-        return ResponseEntity.ok(userService.adminSearchUsers(query));
     }
 }

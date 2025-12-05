@@ -1,11 +1,13 @@
 package at.fhtw.webenprjbackend.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
@@ -45,6 +47,7 @@ import at.fhtw.webenprjbackend.repository.UserRepository;
  * @see PostController
  */
 @Service
+@Transactional(readOnly = true)
 public class PostService {
 
     private final PostRepository postRepository;
@@ -55,14 +58,9 @@ public class PostService {
         this.userRepository = userRepository;
     }
 
-    public List<PostResponse> getAllPosts() {
-        List<Post> posts = postRepository.findAllByOrderByCreatedAtDesc();
-        List<PostResponse> responses = new ArrayList<>();
-
-        for (Post post : posts) {
-            responses.add(mapToResponse(post));
-        }
-        return responses;
+    public Page<PostResponse> getAllPosts(Pageable pageable) {
+        return postRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(this::mapToResponse);
     }
 
     public PostResponse getPostById(UUID id) {
@@ -71,6 +69,7 @@ public class PostService {
         return mapToResponse(post);
     }
 
+    @Transactional
     public PostResponse createPost(PostCreateRequest request, UUID userId) {
 
         User user = userRepository.findById(userId)
@@ -89,6 +88,7 @@ public class PostService {
         return mapToResponse(saved);
     }
 
+    @Transactional
     public PostResponse updatePost(UUID id, PostUpdateRequest request) {
         Post existing = postRepository.findById(id)
                 .orElseThrow(() ->
@@ -120,6 +120,7 @@ public class PostService {
      * @param id the UUID of the post to delete
      * @throws ResponseStatusException with NOT_FOUND status if post doesn't exist
      */
+    @Transactional
     public void deletePost(UUID id) {
         Post existing = postRepository.findById(id)
                 .orElseThrow(() ->
@@ -128,17 +129,12 @@ public class PostService {
         postRepository.delete(existing);
     }
 
-    public List<PostResponse> searchPosts(String keyword) {
+    public Page<PostResponse> searchPosts(String keyword, Pageable pageable) {
         if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllPosts();
+            return getAllPosts(pageable);
         }
-        List<Post> posts =
-                postRepository.findByContentContainingIgnoreCase(keyword.trim());
-        List<PostResponse> responses = new ArrayList<>();
-        for (Post post : posts) {
-            responses.add(mapToResponse(post));
-        }
-        return responses;
+        return postRepository.findByContentContainingIgnoreCase(keyword.trim(), pageable)
+                .map(this::mapToResponse);
     }
 
     public long getPostCount() {

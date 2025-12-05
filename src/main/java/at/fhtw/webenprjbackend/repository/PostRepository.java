@@ -1,11 +1,15 @@
 package at.fhtw.webenprjbackend.repository;
 
 import java.util.List;
-import at.fhtw.webenprjbackend.entity.User;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import at.fhtw.webenprjbackend.entity.Post;
-import java.util.UUID;
+import at.fhtw.webenprjbackend.entity.User;
 
 /**
  * Repository interface for Post entity operations.
@@ -16,7 +20,11 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
     List<Post> findAllByOrderByCreatedAtDesc();
 
+    Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
     List<Post> findByContentContainingIgnoreCase(String keyword);
+
+    Page<Post> findByContentContainingIgnoreCase(String keyword, Pageable pageable);
 
     List<Post> findBySubjectIgnoreCase(String subject);
 

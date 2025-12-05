@@ -2,6 +2,8 @@ package at.fhtw.webenprjbackend.config;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +23,8 @@ import at.fhtw.webenprjbackend.repository.UserRepository;
 @Configuration
 public class TestDataLoader {
 
+    private static final Logger log = LoggerFactory.getLogger(TestDataLoader.class);
+
     @Bean
     @ConditionalOnProperty(name = "app.data.load-dev-data", havingValue = "true")
     CommandLineRunner initDatabase(UserRepository userRepository, 
@@ -29,11 +33,11 @@ public class TestDataLoader {
         return args -> {
             // Check if data already exists (prevent duplicates)
             if (userRepository.count() > 0) {
-                System.out.println("📊 Database already contains data, skipping test data load");
+                log.info("Database already contains data, skipping test data load");
                 return;
             }
             
-            System.out.println("🚀 Loading fresh test data for development...");
+            log.info("Loading fresh test data for development...");
             
             // Create test users
             User anna = createUser("anna.schmidt@example.com", "study_anna", 
@@ -55,7 +59,7 @@ public class TestDataLoader {
                 
             postRepository.saveAll(List.of(post1, post2, post3));
             
-            System.out.println("✅ Test data loaded successfully!");
+            log.info("Test data loaded successfully!");
             printTestCredentials();
             printH2ConnectionInfo();
         };
@@ -72,18 +76,18 @@ public class TestDataLoader {
     }
     
     private void printTestCredentials() {
-        System.out.println("🔑 Test Credentials:");
-        System.out.println("   📧 anna.schmidt@example.com / Password123!");
-        System.out.println("   📧 max.meier@example.com / Password123!");
-        System.out.println("   👑 admin@motivise.app / AdminPass456!");
+        log.info("Test Credentials:");
+        log.info("   anna.schmidt@example.com / Password123!");
+        log.info("   max.meier@example.com / Password123!");
+        log.info("   admin@motivise.app / AdminPass456!");
     }
     
     private void printH2ConnectionInfo() {
-        System.out.println("🗄️ H2 Console Access (In-Memory DB):");
-        System.out.println("   URL: http://localhost:8081/h2-console");
-        System.out.println("   JDBC URL: jdbc:h2:mem:motivise_dev");
-        System.out.println("   Username: sa");
-        System.out.println("   Password: (leave empty)");
-        System.out.println("   ⚡ In-memory only - data lost on restart!");
+        log.info("H2 Console Access (In-Memory DB):");
+        log.info("   URL: http://localhost:8081/h2-console");
+        log.info("   JDBC URL: jdbc:h2:mem:motivise_dev");
+        log.info("   Username: sa");
+        log.info("   Password: (leave empty)");
+        log.info("   In-memory only - data lost on restart!");
     }
 }
