@@ -43,10 +43,12 @@ class PostControllerTest {
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 UUID.randomUUID(),
-                "alice"
+                "alice",
+                0,
+                false
         );
         Page<PostResponse> page = new PageImpl<>(List.of(sample), PageRequest.of(1, 5), 6);
-        when(postService.getAllPosts(any(Pageable.class))).thenReturn(page);
+        when(postService.getAllPosts(any(Pageable.class), any(UUID.class))).thenReturn(page);
 
         mockMvc.perform(get("/posts")
                         .param("page", "1")
@@ -54,6 +56,6 @@ class PostControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        verify(postService).getAllPosts(PageRequest.of(1, 5));
+        verify(postService).getAllPosts(PageRequest.of(1, 5), null);
     }
 }

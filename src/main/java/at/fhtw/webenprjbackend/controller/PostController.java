@@ -40,6 +40,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * REST Controller for managing study posts.
@@ -93,15 +94,24 @@ public class PostController {
             )
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") @PositiveOrZero int page,
-            @RequestParam(defaultValue = "20") @Positive @Max(100) int size) {
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size,
+            @RequestParam(required = false, defaultValue = "all")
+            @Pattern(regexp = "all|following", flags = Pattern.Flag.CASE_INSENSITIVE,
+                    message = "filter must be 'all' or 'following'")
+            String filter,
+            Authentication authentication) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        UUID currentUserId = extractUserId(authentication);
 
         // RESTful approach: use query parameter to filter collection
-        if (search != null && !search.isBlank()) {
-            return ResponseEntity.ok(postService.searchPosts(search, pageable));
+        if ("following".equalsIgnoreCase(filter)) {
+            return ResponseEntity.ok(postService.getFollowingPosts(pageable, currentUserId));
         }
-        return ResponseEntity.ok(postService.getAllPosts(pageable));
+        if (search != null && !search.isBlank()) {
+            return ResponseEntity.ok(postService.searchPosts(search, pageable, currentUserId));
+        }
+        return ResponseEntity.ok(postService.getAllPosts(pageable, currentUserId));
     }
 
     @GetMapping("/{id}")
@@ -132,8 +142,10 @@ public class PostController {
     })
     public ResponseEntity<PostResponse> getPostById(
             @Parameter(description = "Post UUID", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable UUID id) {
-        return ResponseEntity.ok(postService.getPostById(id));
+            @PathVariable UUID id,
+            Authentication authentication) {
+        UUID currentUserId = extractUserId(authentication);
+        return ResponseEntity.ok(postService.getPostById(id, currentUserId));
     }
 
     // ===============================
@@ -317,5 +329,16 @@ public class PostController {
 
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private UUID extractUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return null;
     }
 }

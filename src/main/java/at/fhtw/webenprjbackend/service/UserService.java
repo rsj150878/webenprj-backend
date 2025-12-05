@@ -71,14 +71,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FollowRepository followRepository;
 
     private static final String DEFAULT_PROFILE_IMAGE =
             "https://example.com/default-profile.png";
 
     public UserService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       FollowRepository followRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.followRepository = followRepository;
     }
 
     // ======================== Register ========================
@@ -241,7 +244,9 @@ public class UserService {
                 user.getProfileImageUrl(),
                 user.getRole().name(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                followRepository.countByFollowed(user),
+                followRepository.countByFollower(user)
         );
     }
 

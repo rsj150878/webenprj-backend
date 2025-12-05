@@ -45,7 +45,9 @@ class UserControllerTest {
                 null,
                 "USER",
                 LocalDateTime.now(),
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                0,
+                0
         );
         Page<UserResponse> page = new PageImpl<>(List.of(user), PageRequest.of(0, 10), 1);
         when(userService.getAllUsers(any(Pageable.class))).thenReturn(page);

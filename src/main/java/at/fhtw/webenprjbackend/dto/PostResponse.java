@@ -73,6 +73,20 @@ public class PostResponse {
     )
     private final String username;
 
+    @Schema(
+        description = "Number of likes for this post",
+        example = "12",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private final long likeCount;
+
+    @Schema(
+        description = "Whether the current user liked this post",
+        example = "true",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
+    private final boolean likedByCurrentUser;
+
     // ===============================
     // Constructor
     // ===============================
@@ -87,10 +101,13 @@ public class PostResponse {
      * @param updatedAt Last update timestamp
      * @param userId ID of the post author
      * @param username Username of the post author
+     * @param likeCount Total likes
+     * @param likedByCurrentUser Whether current user liked the post
      */
     public PostResponse(UUID id, String subject, String content, String imageUrl, 
                        LocalDateTime createdAt, LocalDateTime updatedAt, 
-                       UUID userId, String username) {
+                       UUID userId, String username,
+                       long likeCount, boolean likedByCurrentUser) {
         this.id = id;
         this.subject = subject;
         this.content = content;
@@ -99,6 +116,8 @@ public class PostResponse {
         this.updatedAt = updatedAt;
         this.userId = userId;
         this.username = username;
+        this.likeCount = likeCount;
+        this.likedByCurrentUser = likedByCurrentUser;
     }
 
     // ===============================
@@ -135,6 +154,14 @@ public class PostResponse {
 
     public String getUsername() { 
         return username; 
+    }
+
+    public long getLikeCount() {
+        return likeCount;
+    }
+
+    public boolean isLikedByCurrentUser() {
+        return likedByCurrentUser;
     }
 
     // ===============================
@@ -202,6 +229,8 @@ public class PostResponse {
                 ", updatedAt=" + updatedAt +
                 ", userId=" + userId +
                 ", username='" + username + '\'' +
+                ", likeCount=" + likeCount +
+                ", likedByCurrentUser=" + likedByCurrentUser +
                 '}';
     }
 
