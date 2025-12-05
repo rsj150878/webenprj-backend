@@ -17,6 +17,7 @@ import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
 import at.fhtw.webenprjbackend.dto.UserResponse;
 import at.fhtw.webenprjbackend.entity.Role;
 import at.fhtw.webenprjbackend.entity.User;
+import at.fhtw.webenprjbackend.repository.FollowRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
@@ -72,16 +73,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FollowRepository followRepository;
-
-    private static final String DEFAULT_PROFILE_IMAGE =
-            "https://example.com/default-profile.png";
+    private final String defaultProfileImage;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       FollowRepository followRepository) {
+                       FollowRepository followRepository,
+                       @org.springframework.beans.factory.annotation.Value("${app.user.default-profile-image:https://example.com/default-profile.png}")
+                       String defaultProfileImage) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.followRepository = followRepository;
+        this.defaultProfileImage = defaultProfileImage;
     }
 
     // ======================== Register ========================
@@ -101,7 +103,7 @@ public class UserService {
                 request.getUsername(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getCountryCode(),
-                request.hasProfileImage() ? request.getProfileImageUrl() : DEFAULT_PROFILE_IMAGE,
+                request.hasProfileImage() ? request.getProfileImageUrl() : defaultProfileImage,
                 Role.USER
         );
 
@@ -136,17 +138,7 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // checks email/username uniqueness (exclude other user)
-        userRepository.findByEmail(request.getEmail())
-                .filter(other -> !other.getId().equals(userId))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
-                });
-
-        userRepository.findByUsername(request.getUsername())
-                .filter(other -> !other.getId().equals(userId))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use.");
-                });
+        validateUniqueEmailAndUsername(userId, request.getEmail(), request.getUsername());
 
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
@@ -180,17 +172,7 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // uniqueness checks
-        userRepository.findByEmail(request.getEmail())
-                .filter(other -> !other.getId().equals(id))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
-                });
-
-        userRepository.findByUsername(request.getUsername())
-                .filter(other -> !other.getId().equals(id))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use.");
-                });
+        validateUniqueEmailAndUsername(id, request.getEmail(), request.getUsername());
 
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
@@ -250,4 +232,17 @@ public class UserService {
         );
     }
 
+    private void validateUniqueEmailAndUsername(UUID excludedUserId, String email, String username) {
+        userRepository.findByEmail(email)
+                .filter(other -> !other.getId().equals(excludedUserId))
+                .ifPresent(other -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
+                });
+
+        userRepository.findByUsername(username)
+                .filter(other -> !other.getId().equals(excludedUserId))
+                .ifPresent(other -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use.");
+                });
+    }
 }

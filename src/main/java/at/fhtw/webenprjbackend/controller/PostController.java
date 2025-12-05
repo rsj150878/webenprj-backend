@@ -30,7 +30,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -130,14 +129,7 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Post not found",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Post Not Found",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":404,\"error\":\"Not Found\",\"message\":\"Post not found with id: 123e4567-e89b-12d3-a456-426614174000\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Post not found"
         )
     })
     public ResponseEntity<PostResponse> getPostById(
@@ -169,25 +161,11 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "400", 
-            description = "Invalid post data",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Validation Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":400,\"error\":\"Bad Request\",\"message\":\"Subject is required\",\"path\":\"/posts\"}"
-                )
-            )
+            description = "Invalid post data"
         ),
         @ApiResponse(
             responseCode = "401", 
-            description = "Authentication required",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authentication Required",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"/posts\"}"
-                )
-            )
+            description = "Authentication required"
         )
     })
     public ResponseEntity<PostResponse> createPost(
@@ -220,47 +198,19 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "400", 
-            description = "Invalid update data",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Validation Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":400,\"error\":\"Bad Request\",\"message\":\"Content cannot be empty\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Invalid update data"
         ),
         @ApiResponse(
             responseCode = "401", 
-            description = "Authentication required",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authentication Required",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"/posts/{id}\"}"
-                )
-            )
+            description = "Authentication required"
         ),
         @ApiResponse(
             responseCode = "403", 
-            description = "Not authorized to update this post",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authorization Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"You can only update your own posts\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Not authorized to update this post"
         ),
         @ApiResponse(
             responseCode = "404", 
-            description = "Post not found",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Post Not Found",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":404,\"error\":\"Not Found\",\"message\":\"Post not found with id: 123e4567-e89b-12d3-a456-426614174000\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Post not found"
         )
     })
     @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Post', 'update')")
@@ -290,36 +240,15 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "401", 
-            description = "Authentication required",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authentication Required",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"/posts/{id}\"}"
-                )
-            )
+            description = "Authentication required"
         ),
         @ApiResponse(
             responseCode = "403", 
-            description = "Not authorized to delete this post",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authorization Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"You can only delete your own posts\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Not authorized to delete this post"
         ),
         @ApiResponse(
             responseCode = "404", 
-            description = "Post not found",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Post Not Found",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":404,\"error\":\"Not Found\",\"message\":\"Post not found with id: 123e4567-e89b-12d3-a456-426614174000\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Post not found"
         )
     })
     @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Post', 'delete')")

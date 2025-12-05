@@ -1,6 +1,10 @@
 package at.fhtw.webenprjbackend.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,8 +69,8 @@ public class PostService {
     }
 
     public Page<PostResponse> getAllPosts(Pageable pageable, UUID currentUserId) {
-        return postRepository.findAllByOrderByCreatedAtDesc(pageable)
-                .map(post -> mapToResponse(post, currentUserId));
+        Page<Post> posts = postRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return mapPageWithLikes(posts, currentUserId);
     }
 
     public Page<PostResponse> getFollowingPosts(Pageable pageable, UUID currentUserId) {
@@ -81,14 +85,14 @@ public class PostService {
         if (follows.isEmpty()) {
             return Page.empty(pageable);
         }
-        return postRepository.findByUserIdInOrderByCreatedAtDesc(follows, pageable)
-                .map(post -> mapToResponse(post, currentUserId));
+        Page<Post> posts = postRepository.findByUserIdInOrderByCreatedAtDesc(follows, pageable);
+        return mapPageWithLikes(posts, currentUserId);
     }
 
     public PostResponse getPostById(UUID id, UUID currentUserId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-        return mapToResponse(post, currentUserId);
+        return mapSingleWithLikes(post, currentUserId);
     }
 
     @Transactional
@@ -107,7 +111,7 @@ public class PostService {
         );
 
         Post saved = postRepository.save(post);
-        return mapToResponse(saved, userId);
+        return mapSingleWithLikes(saved, userId);
     }
 
     @Transactional
@@ -129,7 +133,7 @@ public class PostService {
         }
 
         Post saved = postRepository.save(existing);
-        return mapToResponse(saved, null);
+        return mapSingleWithLikes(saved, null);
     }
 
     /**
@@ -155,8 +159,8 @@ public class PostService {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllPosts(pageable, currentUserId);
         }
-        return postRepository.findByContentContainingIgnoreCase(keyword.trim(), pageable)
-                .map(post -> mapToResponse(post, currentUserId));
+        Page<Post> posts = postRepository.findByContentContainingIgnoreCase(keyword.trim(), pageable);
+        return mapPageWithLikes(posts, currentUserId);
     }
 
     public long getPostCount() {
@@ -165,8 +169,8 @@ public class PostService {
 
     public Page<PostResponse> searchBySubject(String subject, Pageable pageable, UUID currentUserId) {
         String normalized = normalizeSubject(subject);
-        return postRepository.findBySubjectIgnoreCase(normalized, pageable)
-                .map(post -> mapToResponse(post, currentUserId));
+        Page<Post> posts = postRepository.findBySubjectIgnoreCase(normalized, pageable);
+        return mapPageWithLikes(posts, currentUserId);
     }
 
     /**
@@ -206,12 +210,9 @@ public class PostService {
      * @param post the Post entity to convert
      * @return PostResponse DTO with '#' prepended to subject
      */
-    private PostResponse mapToResponse(Post post, UUID currentUserId) {
-        long likeCount = postLikeRepository.countByPost(post);
-        boolean likedByCurrentUser = false;
-        if (currentUserId != null) {
-            likedByCurrentUser = postLikeRepository.existsByUserIdAndPostId(currentUserId, post.getId());
-        }
+    private PostResponse mapToResponse(Post post, Map<UUID, Long> likeCounts, Set<UUID> likedByCurrentUser) {
+        long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
+        boolean isLiked = likedByCurrentUser.contains(post.getId());
         return new PostResponse(
                 post.getId(),
                 "#" + post.getSubject(), // Add '#' for frontend display
@@ -222,7 +223,39 @@ public class PostService {
                 post.getUser().getId(),
                 post.getUser().getUsername(),
                 likeCount,
-                likedByCurrentUser
+                isLiked
         );
+    }
+
+    private Page<PostResponse> mapPageWithLikes(Page<Post> posts, UUID currentUserId) {
+        Map<UUID, Long> likeCounts = fetchLikeCounts(posts.getContent());
+        Set<UUID> likedByCurrentUser = fetchLikedPostIds(posts.getContent(), currentUserId);
+        return posts.map(post -> mapToResponse(post, likeCounts, likedByCurrentUser));
+    }
+
+    private PostResponse mapSingleWithLikes(Post post, UUID currentUserId) {
+        Map<UUID, Long> likeCounts = fetchLikeCounts(List.of(post));
+        Set<UUID> likedByCurrentUser = fetchLikedPostIds(List.of(post), currentUserId);
+        return mapToResponse(post, likeCounts, likedByCurrentUser);
+    }
+
+    private Map<UUID, Long> fetchLikeCounts(List<Post> posts) {
+        if (posts.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> postIds = posts.stream().map(Post::getId).toList();
+        return postLikeRepository.countLikesByPostIds(postIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
+    private Set<UUID> fetchLikedPostIds(List<Post> posts, UUID currentUserId) {
+        if (currentUserId == null || posts.isEmpty()) {
+            return Set.of();
+        }
+        List<UUID> postIds = posts.stream().map(Post::getId).toList();
+        return Set.copyOf(postLikeRepository.findLikedPostIds(currentUserId, postIds));
     }
 }
