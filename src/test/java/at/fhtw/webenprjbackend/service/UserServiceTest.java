@@ -36,7 +36,7 @@ class UserServiceTest {
     private static final String DEFAULT_IMAGE = "https://static.example.com/default.png";
 
     @BeforeEach
-    void setup() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         userService = new UserService(userRepository, passwordEncoder, followRepository, DEFAULT_IMAGE);
 
@@ -50,8 +50,7 @@ class UserServiceTest {
                 var idField = User.class.getDeclaredField("id");
                 idField.setAccessible(true);
                 idField.set(u, UUID.randomUUID());
-            } catch (Exception ignored) {
-            }
+            } catch (NoSuchFieldException | IllegalAccessException ignored) { }
             return u;
         });
     }
@@ -68,8 +67,8 @@ class UserServiceTest {
 
         var response = userService.registerUser(request);
 
-        assertThat(response.profileImageUrl()).isEqualTo(DEFAULT_IMAGE);
-        assertThat(response.role()).isEqualTo(Role.USER.name());
+        assertThat(response.getProfileImageUrl()).isEqualTo(DEFAULT_IMAGE);
+        assertThat(response.getRole()).isEqualTo(Role.USER.name());
     }
 
     @Test
