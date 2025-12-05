@@ -1,9 +1,11 @@
 package at.fhtw.webenprjbackend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
@@ -57,5 +59,21 @@ class PostControllerTest {
                 .andExpect(status().isOk());
 
         verify(postService).getAllPosts(PageRequest.of(1, 5), null);
+    }
+
+    @Test
+    void updatePost_withInvalidPayload_returnsBadRequest() throws Exception {
+        UUID postId = UUID.randomUUID();
+        // subject too short and invalid characters
+        String payload = """
+                {"subject":"!","content":"short","imageUrl":"http://invalid.bmp"}
+                """;
+
+        mockMvc.perform(put("/posts/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest());
+
+        verify(postService, never()).updatePost(any(), any());
     }
 }
