@@ -1,12 +1,13 @@
 package at.fhtw.webenprjbackend.service;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
@@ -65,6 +66,7 @@ import at.fhtw.webenprjbackend.repository.UserRepository;
  * @see UserController
  */
 @Service
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -80,6 +82,7 @@ public class UserService {
     }
 
     // ======================== Register ========================
+    @Transactional
     public UserResponse registerUser(UserRegistrationRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -101,51 +104,19 @@ public class UserService {
 
         User saved = userRepository.save(newUser);
 
-        return new UserResponse(
-                saved.getId(),
-                saved.getEmail(),
-                saved.getUsername(),
-                saved.getCountryCode(),
-                saved.getProfileImageUrl(),
-                saved.getRole().name(),
-                saved.getCreatedAt(),
-                saved.getUpdatedAt()
-        );
+        return toResponse(saved);
     }
 
     // ======================== General Methods ========================
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        List<UserResponse> responses = new ArrayList<>();
-
-        for (User user : users) {
-            responses.add(new UserResponse(
-                    user.getId(),
-                    user.getEmail(),
-                    user.getUsername(),
-                    user.getCountryCode(),
-                    user.getProfileImageUrl(),
-                    user.getRole().name(),
-                    user.getCreatedAt(),
-                    user.getUpdatedAt()
-            ));
-        }
-        return responses;
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return new UserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getUsername(),
-                user.getCountryCode(),
-                user.getProfileImageUrl(),
-                user.getRole().name(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
+        return toResponse(user);
     }
 
 
@@ -156,6 +127,7 @@ public class UserService {
         return toResponse(user);
     }
 
+    @Transactional
     public UserResponse updateCurrentUserProfile(UUID userId, UserProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -185,6 +157,7 @@ public class UserService {
         return toResponse(saved);
     }
 
+    @Transactional
     public void changePassword(UUID userId, ChangePasswordRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -198,6 +171,7 @@ public class UserService {
     }
 
     // ======================== Admin-Functions ========================
+    @Transactional
     public UserResponse adminUpdateUser(UUID id, AdminUserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -230,6 +204,7 @@ public class UserService {
         return toResponse(saved);
     }
 
+    @Transactional
     public void adminDeleteUser(UUID id) {
         if (!userRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
@@ -237,6 +212,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
     public UserResponse adminToggleActive(UUID id, boolean active) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -245,17 +221,14 @@ public class UserService {
         return toResponse(saved);
     }
 
-    public List<UserResponse> adminSearchUsers(String query) {
+    public Page<UserResponse> adminSearchUsers(String query, Pageable pageable) {
         if (query == null || query.isBlank()) {
-            return getAllUsers();
+            return getAllUsers(pageable);
         }
-        List<User> users = userRepository
+        return userRepository
                 .findByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrCountryCodeContainingIgnoreCase(
-                        query, query, query
-                );
-        return users.stream()
-                .map(this::toResponse)
-                .toList();
+                        query, query, query, pageable
+                ).map(this::toResponse);
     }
 
     // ======================== Helper ========================

@@ -18,21 +18,22 @@ import lombok.RequiredArgsConstructor;
 public class MinioStorage implements FileStorage {
 
     private final MinioClient minioClient;
+    private final MinioProperties minioProperties;
 
     @Override
     public String upload(MultipartFile file) {
         try {
             String objectName = java.util.UUID.randomUUID().toString();
-            
+
             minioClient.putObject(
                 PutObjectArgs.builder()
-                    .bucket("uploads")
+                    .bucket(minioProperties.getBucketName())
                     .object(objectName)
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .contentType(file.getContentType())
                     .build()
             );
-            
+
             return objectName;
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload file to MinIO", e);
@@ -44,7 +45,7 @@ public class MinioStorage implements FileStorage {
         try {
             return minioClient.getObject(
                 GetObjectArgs.builder()
-                    .bucket("uploads")
+                    .bucket(minioProperties.getBucketName())
                     .object(id)
                     .build()
             );

@@ -16,14 +16,16 @@ public class MinioInitializer {
 
     Logger log = LoggerFactory.getLogger(MinioInitializer.class);
     private final MinioClient minioClient;
+    private final MinioProperties minioProperties;
 
-    public MinioInitializer(MinioClient minioClient) {
+    public MinioInitializer(MinioClient minioClient, MinioProperties minioProperties) {
         this.minioClient = minioClient;
+        this.minioProperties = minioProperties;
     }
 
     @PostConstruct
     public void initBuckets() throws Exception {
-        createBucketIfNotExists("uploads");
+        createBucketIfNotExists(minioProperties.getBucketName());
     }
 
     private void createBucketIfNotExists(String bucketName) throws Exception {
