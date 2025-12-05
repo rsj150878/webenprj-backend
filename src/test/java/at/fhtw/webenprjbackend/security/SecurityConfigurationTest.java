@@ -20,8 +20,8 @@ class SecurityConfigurationTest {
         SecurityConfiguration config = new SecurityConfiguration(env);
         CorsConfigurationSource source = config.corsConfigurationSource();
         UrlBasedCorsConfigurationSource urlSource = (UrlBasedCorsConfigurationSource) source;
-
-        var corsConfig = urlSource.getCorsConfiguration("/**");
+        var corsConfig = urlSource.getCorsConfigurations().get("/**");
+        assertThat(corsConfig).isNotNull();
         assertThat(corsConfig.getAllowedOrigins()).containsExactly(
                 "https://app.example.com", "https://admin.example.com");
     }
@@ -33,8 +33,8 @@ class SecurityConfigurationTest {
 
         SecurityConfiguration config = new SecurityConfiguration(env);
         UrlBasedCorsConfigurationSource urlSource = (UrlBasedCorsConfigurationSource) config.corsConfigurationSource();
-
-        List<String> origins = urlSource.getCorsConfiguration("/**").getAllowedOrigins();
+        var corsConfig = urlSource.getCorsConfigurations().get("/**");
+        List<String> origins = corsConfig.getAllowedOrigins();
         assertThat(origins).contains("http://localhost:5173");
     }
 }

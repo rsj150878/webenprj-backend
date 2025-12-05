@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -137,19 +136,6 @@ public class SecurityConfiguration {
             // "strict-origin-when-cross-origin" balances privacy and functionality
             headers.referrerPolicy(referrer -> referrer
                     .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-            );
-
-            // Permissions-Policy: Controls browser features and APIs
-            // Disables unnecessary features to reduce attack surface
-            headers.permissionsPolicy(permissions -> permissions
-                    .policy("geolocation=(), " +          // Disable geolocation
-                           "microphone=(), " +            // Disable microphone
-                           "camera=(), " +                // Disable camera
-                           "payment=(), " +               // Disable payment APIs
-                           "usb=(), " +                   // Disable USB
-                           "magnetometer=(), " +          // Disable sensors
-                           "gyroscope=(), " +
-                           "accelerometer=()")
             );
 
             // Cache-Control: Prevent sensitive data caching

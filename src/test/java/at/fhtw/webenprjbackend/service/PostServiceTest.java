@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +45,7 @@ class PostServiceTest {
     private Post postB;
 
     @BeforeEach
-    void setup() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         author = new User(
                 "alice@example.com",
@@ -70,8 +69,7 @@ class PostServiceTest {
             idField.setAccessible(true);
             idField.set(postA, postAId);
             idField.set(postB, postBId);
-        } catch (Exception ignored) {
-        }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) { }
     }
 
     @Test

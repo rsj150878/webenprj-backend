@@ -114,6 +114,15 @@ public class UserResponse {
         this.followingCount = followingCount;
     }
 
+    /**
+     * Convenience constructor when follower/following counts are not available.
+     */
+    public UserResponse(UUID id, String email, String username, String countryCode,
+                        String profileImageUrl, String role, LocalDateTime createdAt,
+                        LocalDateTime updatedAt) {
+        this(id, email, username, countryCode, profileImageUrl, role, createdAt, updatedAt, 0, 0);
+    }
+
     // ===============================
     // Getters
     // ===============================
