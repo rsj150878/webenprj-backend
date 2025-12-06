@@ -59,10 +59,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationFilter jwtFilter) throws Exception {
 
-        // Check for development profiles (dev OR docker-free)
-        boolean isDevelopmentMode = Arrays.asList(environment.getActiveProfiles())
-            .stream()
-            .anyMatch(profile -> profile.equals("dev") || profile.equals("docker-free"));
+        boolean isDevelopmentMode = isDevelopmentProfile();
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -114,7 +111,7 @@ public class SecurityConfiguration {
 
             // X-Content-Type-Options: Prevents MIME type sniffing
             // Forces browsers to respect the declared Content-Type
-            headers.contentTypeOptions(contentTypeOptions -> contentTypeOptions.disable());
+            headers.contentTypeOptions(org.springframework.security.config.Customizer.withDefaults());
 
             // X-XSS-Protection: Legacy XSS protection (mostly replaced by CSP)
             // Modern browsers use CSP, but this adds defense-in-depth
@@ -133,51 +130,12 @@ public class SecurityConfiguration {
 
             // Content Security Policy (CSP)
             // Prevents XSS attacks by controlling resource loading
-            if (isDevelopmentMode) {
-                // Development: More permissive to allow dev tools
-                headers.contentSecurityPolicy(csp -> csp
-                        .policyDirectives(
-                                "default-src 'self'; " +
-                                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +  // Swagger needs unsafe-inline
-                                "style-src 'self' 'unsafe-inline'; " +                 // Swagger needs unsafe-inline
-                                "img-src 'self' data: https:; " +                      // Allow data: URIs and external images
-                                "font-src 'self' data:; " +
-                                "frame-ancestors 'self'"                               // Allow same-origin framing
-                        )
-                );
-            } else {
-                // Production: Strict policy
-                headers.contentSecurityPolicy(csp -> csp
-                        .policyDirectives(
-                                "default-src 'self'; " +
-                                "script-src 'self'; " +
-                                "style-src 'self'; " +
-                                "img-src 'self' data: https:; " +
-                                "font-src 'self'; " +
-                                "frame-ancestors 'none'; " +                           // No framing allowed
-                                "base-uri 'self'; " +
-                                "form-action 'self'"
-                        )
-                );
-            }
+            headers.contentSecurityPolicy(csp -> csp.policyDirectives(cspDirectives(isDevelopmentMode)));
 
             // Referrer-Policy: Controls referrer information sent with requests
             // "strict-origin-when-cross-origin" balances privacy and functionality
             headers.referrerPolicy(referrer -> referrer
                     .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-            );
-
-            // Permissions-Policy: Controls browser features and APIs
-            // Disables unnecessary features to reduce attack surface
-            headers.permissionsPolicy(permissions -> permissions
-                    .policy("geolocation=(), " +          // Disable geolocation
-                           "microphone=(), " +            // Disable microphone
-                           "camera=(), " +                // Disable camera
-                           "payment=(), " +               // Disable payment APIs
-                           "usb=(), " +                   // Disable USB
-                           "magnetometer=(), " +          // Disable sensors
-                           "gyroscope=(), " +
-                           "accelerometer=()")
             );
 
             // Cache-Control: Prevent sensitive data caching
@@ -200,10 +158,7 @@ public class SecurityConfiguration {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Check for development mode
-        boolean isDevelopmentMode = Arrays.asList(environment.getActiveProfiles())
-            .stream()
-            .anyMatch(profile -> profile.equals("dev") || profile.equals("docker-free"));
+        boolean isDevelopmentMode = isDevelopmentProfile();
 
         if (isDevelopmentMode) {
             // Development: Allow common local development ports
@@ -216,13 +171,7 @@ public class SecurityConfiguration {
         } else {
             // Production: Use environment variable for frontend URL
             // Set CORS_ALLOWED_ORIGINS in .env file
-            String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
-            if (allowedOrigins != null && !allowedOrigins.isBlank()) {
-                config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
-            } else {
-                // Fallback to restrictive default
-                config.setAllowedOrigins(List.of("https://motivise.app"));
-            }
+            config.setAllowedOrigins(resolveProductionOrigins());
         }
 
         // Allow necessary HTTP methods
@@ -244,5 +193,41 @@ public class SecurityConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private boolean isDevelopmentProfile() {
+        return Arrays.stream(environment.getActiveProfiles())
+                .anyMatch(profile -> profile.equals("dev") || profile.equals("docker-free"));
+    }
+
+    private List<String> resolveProductionOrigins() {
+        String allowedOrigins = environment.getProperty("CORS_ALLOWED_ORIGINS");
+        if (allowedOrigins != null && !allowedOrigins.isBlank()) {
+            return List.of(allowedOrigins.split(","));
+        }
+        return List.of("https://motivise.app");
+    }
+
+    private String cspDirectives(boolean isDevelopmentMode) {
+        if (isDevelopmentMode) {
+            return String.join(" ",
+                    "default-src 'self';",
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
+                    "style-src 'self' 'unsafe-inline';",
+                    "img-src 'self' data: https:;",
+                    "font-src 'self' data:;",
+                    "frame-ancestors 'self'"
+            );
+        }
+        return String.join(" ",
+                "default-src 'self';",
+                "script-src 'self';",
+                "style-src 'self';",
+                "img-src 'self' data: https:;",
+                "font-src 'self';",
+                "frame-ancestors 'none';",
+                "base-uri 'self';",
+                "form-action 'self'"
+        );
     }
 }

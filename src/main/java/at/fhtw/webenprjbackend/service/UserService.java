@@ -1,12 +1,13 @@
 package at.fhtw.webenprjbackend.service;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
@@ -16,6 +17,7 @@ import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
 import at.fhtw.webenprjbackend.dto.UserResponse;
 import at.fhtw.webenprjbackend.entity.Role;
 import at.fhtw.webenprjbackend.entity.User;
+import at.fhtw.webenprjbackend.repository.FollowRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
@@ -65,21 +67,27 @@ import at.fhtw.webenprjbackend.repository.UserRepository;
  * @see UserController
  */
 @Service
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    private static final String DEFAULT_PROFILE_IMAGE =
-            "https://example.com/default-profile.png";
+    private final FollowRepository followRepository;
+    private final String defaultProfileImage;
 
     public UserService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       FollowRepository followRepository,
+                       @org.springframework.beans.factory.annotation.Value("${app.user.default-profile-image:https://example.com/default-profile.png}")
+                       String defaultProfileImage) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.followRepository = followRepository;
+        this.defaultProfileImage = defaultProfileImage;
     }
 
     // ======================== Register ========================
+    @Transactional
     public UserResponse registerUser(UserRegistrationRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -95,57 +103,25 @@ public class UserService {
                 request.getUsername(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getCountryCode(),
-                request.hasProfileImage() ? request.getProfileImageUrl() : DEFAULT_PROFILE_IMAGE,
+                request.hasProfileImage() ? request.getProfileImageUrl() : defaultProfileImage,
                 Role.USER
         );
 
         User saved = userRepository.save(newUser);
 
-        return new UserResponse(
-                saved.getId(),
-                saved.getEmail(),
-                saved.getUsername(),
-                saved.getCountryCode(),
-                saved.getProfileImageUrl(),
-                saved.getRole().name(),
-                saved.getCreatedAt(),
-                saved.getUpdatedAt()
-        );
+        return toResponse(saved);
     }
 
     // ======================== General Methods ========================
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        List<UserResponse> responses = new ArrayList<>();
-
-        for (User user : users) {
-            responses.add(new UserResponse(
-                    user.getId(),
-                    user.getEmail(),
-                    user.getUsername(),
-                    user.getCountryCode(),
-                    user.getProfileImageUrl(),
-                    user.getRole().name(),
-                    user.getCreatedAt(),
-                    user.getUpdatedAt()
-            ));
-        }
-        return responses;
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return new UserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getUsername(),
-                user.getCountryCode(),
-                user.getProfileImageUrl(),
-                user.getRole().name(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
+        return toResponse(user);
     }
 
 
@@ -156,22 +132,13 @@ public class UserService {
         return toResponse(user);
     }
 
+    @Transactional
     public UserResponse updateCurrentUserProfile(UUID userId, UserProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // checks email/username uniqueness (exclude other user)
-        userRepository.findByEmail(request.getEmail())
-                .filter(other -> !other.getId().equals(userId))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
-                });
-
-        userRepository.findByUsername(request.getUsername())
-                .filter(other -> !other.getId().equals(userId))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use.");
-                });
+        validateUniqueEmailAndUsername(userId, request.getEmail(), request.getUsername());
 
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
@@ -185,6 +152,7 @@ public class UserService {
         return toResponse(saved);
     }
 
+    @Transactional
     public void changePassword(UUID userId, ChangePasswordRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -198,22 +166,13 @@ public class UserService {
     }
 
     // ======================== Admin-Functions ========================
+    @Transactional
     public UserResponse adminUpdateUser(UUID id, AdminUserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         // uniqueness checks
-        userRepository.findByEmail(request.getEmail())
-                .filter(other -> !other.getId().equals(id))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
-                });
-
-        userRepository.findByUsername(request.getUsername())
-                .filter(other -> !other.getId().equals(id))
-                .ifPresent(other -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use.");
-                });
+        validateUniqueEmailAndUsername(id, request.getEmail(), request.getUsername());
 
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
@@ -230,6 +189,7 @@ public class UserService {
         return toResponse(saved);
     }
 
+    @Transactional
     public void adminDeleteUser(UUID id) {
         if (!userRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
@@ -237,6 +197,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
     public UserResponse adminToggleActive(UUID id, boolean active) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -245,17 +206,14 @@ public class UserService {
         return toResponse(saved);
     }
 
-    public List<UserResponse> adminSearchUsers(String query) {
+    public Page<UserResponse> adminSearchUsers(String query, Pageable pageable) {
         if (query == null || query.isBlank()) {
-            return getAllUsers();
+            return getAllUsers(pageable);
         }
-        List<User> users = userRepository
+        return userRepository
                 .findByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrCountryCodeContainingIgnoreCase(
-                        query, query, query
-                );
-        return users.stream()
-                .map(this::toResponse)
-                .toList();
+                        query, query, query, pageable
+                ).map(this::toResponse);
     }
 
     // ======================== Helper ========================
@@ -268,8 +226,23 @@ public class UserService {
                 user.getProfileImageUrl(),
                 user.getRole().name(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                followRepository.countByFollowed(user),
+                followRepository.countByFollower(user)
         );
     }
 
+    private void validateUniqueEmailAndUsername(UUID excludedUserId, String email, String username) {
+        userRepository.findByEmail(email)
+                .filter(other -> !other.getId().equals(excludedUserId))
+                .ifPresent(other -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
+                });
+
+        userRepository.findByUsername(username)
+                .filter(other -> !other.getId().equals(excludedUserId))
+                .ifPresent(other -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use.");
+                });
+    }
 }

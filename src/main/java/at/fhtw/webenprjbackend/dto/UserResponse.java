@@ -70,6 +70,20 @@ public class UserResponse {
     )
     private final LocalDateTime updatedAt;
 
+    @Schema(
+        description = "Number of followers",
+        example = "42",
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    private final long followerCount;
+
+    @Schema(
+        description = "Number of users this user follows",
+        example = "10",
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    private final long followingCount;
+
     // ===============================
     // Constructor
     // ===============================
@@ -85,9 +99,9 @@ public class UserResponse {
      * @param createdAt Account creation timestamp
      * @param updatedAt Last update timestamp
      */
-    public UserResponse(UUID id, String email, String username, String countryCode, 
-                       String profileImageUrl, String role, LocalDateTime createdAt, 
-                       LocalDateTime updatedAt) {
+    public UserResponse(UUID id, String email, String username, String countryCode,
+                       String profileImageUrl, String role, LocalDateTime createdAt,
+                       LocalDateTime updatedAt, long followerCount, long followingCount) {
         this.id = id;
         this.email = email;
         this.username = username;
@@ -96,6 +110,17 @@ public class UserResponse {
         this.role = role;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.followerCount = followerCount;
+        this.followingCount = followingCount;
+    }
+
+    /**
+     * Convenience constructor when follower/following counts are not available.
+     */
+    public UserResponse(UUID id, String email, String username, String countryCode,
+                        String profileImageUrl, String role, LocalDateTime createdAt,
+                        LocalDateTime updatedAt) {
+        this(id, email, username, countryCode, profileImageUrl, role, createdAt, updatedAt, 0, 0);
     }
 
     // ===============================
@@ -132,6 +157,14 @@ public class UserResponse {
 
     public LocalDateTime getUpdatedAt() { 
         return updatedAt; 
+    }
+
+    public long getFollowerCount() {
+        return followerCount;
+    }
+
+    public long getFollowingCount() {
+        return followingCount;
     }
 
     // ===============================

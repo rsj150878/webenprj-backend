@@ -349,6 +349,42 @@ clean-install.cmd            # Nuclear recovery
 
 ---
 
+## 📚 API Documentation
+
+**Complete API documentation is available via Swagger UI:**
+- **Swagger UI**: http://localhost:8081/swagger-ui/index.html (when server is running)
+- Interactive documentation with request/response examples
+- Test endpoints directly from the browser
+
+### Quick API Overview
+
+**Authentication:**
+- `POST /auth/login` - User login (returns JWT token)
+
+**Users:**
+- `POST /users` - Register new account (public)
+- `GET /users/me` - Get current user profile
+- `PUT /users/me` - Update own profile
+- `PATCH /users/me/password` - Change password
+- `GET /users?search={query}` - List/search users (admin only)
+
+**Posts:**
+- `GET /posts?search={keyword}` - List/search all posts
+- `POST /posts` - Create new post
+- `PUT /posts/{id}` - Update post (owner or admin)
+- `DELETE /posts/{id}` - Delete post (owner or admin)
+
+**Media:**
+- `POST /medias` - Upload file (jpg, png, gif, pdf - max 10MB)
+- `GET /medias/{id}` - Download file
+
+**RESTful Design:**
+- Query parameters for filtering collections: `GET /posts?search=keyword`
+- Standard HTTP methods: GET, POST, PUT, PATCH, DELETE
+- Semantic status codes: 200 OK, 201 Created, 204 No Content, etc.
+
+---
+
 ## 📁 Project Structure
 
 ```

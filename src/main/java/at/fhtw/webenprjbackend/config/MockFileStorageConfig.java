@@ -23,8 +23,6 @@ import at.fhtw.webenprjbackend.filestorage.FileStorage;
 @Profile("docker-free")
 public class MockFileStorageConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(MockFileStorageConfig.class);
-
     /**
      * Mock FileStorage implementation that stores files in memory
      */
@@ -60,7 +58,7 @@ public class MockFileStorageConfig {
                 
                 return fileId;
                 
-            } catch (Exception e) {
+            } catch (java.io.IOException e) {
                 log.error("❌ Mock file upload failed: {}", file.getOriginalFilename(), e);
                 throw new RuntimeException("Mock file upload failed", e);
             }
@@ -85,12 +83,10 @@ public class MockFileStorageConfig {
      */
     private static class MockFile {
         final String originalName;
-        final String contentType;
         final byte[] content;
 
         MockFile(String originalName, String contentType, byte[] content) {
             this.originalName = originalName;
-            this.contentType = contentType;
             this.content = content;
         }
     }
