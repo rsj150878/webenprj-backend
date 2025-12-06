@@ -1,12 +1,16 @@
 package at.fhtw.webenprjbackend.controller;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,13 +30,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * REST Controller for managing study posts.
@@ -42,6 +49,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/posts")
 @Tag(name = "Posts", description = "Study posts management - create, read, update, delete and search study updates")
+@Validated
 public class PostController {
 
     private static final String MEDIA_TYPE_JSON = "application/json";
@@ -63,19 +71,46 @@ public class PostController {
 
     @GetMapping
     @Operation(
-        summary = "Get all posts",
-        description = "Retrieve all study posts ordered by creation date (newest first). Public endpoint, no authentication required."
+        summary = "Get all posts or search posts",
+        description = "Retrieve all study posts ordered by creation date (newest first), or search posts by keyword. " +
+                      "Use the 'search' query parameter to filter results. RESTful design: filtering via query parameters."
     )
-    @ApiResponse(
-        responseCode = "200", 
-        description = "Posts retrieved successfully",
-        content = @Content(
-            mediaType = MEDIA_TYPE_JSON,
-            array = @ArraySchema(schema = @Schema(implementation = PostResponse.class))
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Posts retrieved successfully (all posts or search results)",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = PostResponse.class))
+            )
         )
-    )
-    public ResponseEntity<List<PostResponse>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    })
+    public ResponseEntity<Page<PostResponse>> getAllPosts(
+            @Parameter(
+                description = "Optional search keyword to filter posts by content (case-insensitive)",
+                example = "java",
+                required = false
+            )
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size,
+            @RequestParam(required = false, defaultValue = "all")
+            @Pattern(regexp = "all|following", flags = Pattern.Flag.CASE_INSENSITIVE,
+                    message = "filter must be 'all' or 'following'")
+            String filter,
+            Authentication authentication) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        UUID currentUserId = extractUserId(authentication);
+
+        // RESTful approach: use query parameter to filter collection
+        if ("following".equalsIgnoreCase(filter)) {
+            return ResponseEntity.ok(postService.getFollowingPosts(pageable, currentUserId));
+        }
+        if (search != null && !search.isBlank()) {
+            return ResponseEntity.ok(postService.searchPosts(search, pageable, currentUserId));
+        }
+        return ResponseEntity.ok(postService.getAllPosts(pageable, currentUserId));
     }
 
     @GetMapping("/{id}")
@@ -85,7 +120,7 @@ public class PostController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200", 
+            responseCode = "200",
             description = "Post found and retrieved",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
@@ -93,40 +128,16 @@ public class PostController {
             )
         ),
         @ApiResponse(
-            responseCode = "404", 
-            description = "Post not found",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Post Not Found",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":404,\"error\":\"Not Found\",\"message\":\"Post not found with id: 123e4567-e89b-12d3-a456-426614174000\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            responseCode = "404",
+            description = "Post not found"
         )
     })
     public ResponseEntity<PostResponse> getPostById(
-            @Parameter(description = "Post UUID", required = true, example = "123e4567-e89b-12d3-a456-426614174000") 
-            @PathVariable UUID id) {
-        return ResponseEntity.ok(postService.getPostById(id));
-    }
-
-    @GetMapping("/search")
-    @Operation(
-        summary = "Search posts",
-        description = "Search posts by keyword in content. Case-insensitive search across post content."
-    )
-    @ApiResponse(
-        responseCode = "200", 
-        description = "Search results retrieved (may be empty)",
-        content = @Content(
-            mediaType = MEDIA_TYPE_JSON,
-            array = @ArraySchema(schema = @Schema(implementation = PostResponse.class))
-        )
-    )
-    public ResponseEntity<List<PostResponse>> searchPosts(
-            @Parameter(description = "Search keyword to find in post content", required = true, example = "java") 
-            @RequestParam("q") String keyword) {
-        return ResponseEntity.ok(postService.searchPosts(keyword));
+            @Parameter(description = "Post UUID", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID id,
+            Authentication authentication) {
+        UUID currentUserId = extractUserId(authentication);
+        return ResponseEntity.ok(postService.getPostById(id, currentUserId));
     }
 
     // ===============================
@@ -150,25 +161,11 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "400", 
-            description = "Invalid post data",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Validation Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":400,\"error\":\"Bad Request\",\"message\":\"Subject is required\",\"path\":\"/posts\"}"
-                )
-            )
+            description = "Invalid post data"
         ),
         @ApiResponse(
             responseCode = "401", 
-            description = "Authentication required",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authentication Required",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"/posts\"}"
-                )
-            )
+            description = "Authentication required"
         )
     })
     public ResponseEntity<PostResponse> createPost(
@@ -201,47 +198,19 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "400", 
-            description = "Invalid update data",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Validation Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":400,\"error\":\"Bad Request\",\"message\":\"Content cannot be empty\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Invalid update data"
         ),
         @ApiResponse(
             responseCode = "401", 
-            description = "Authentication required",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authentication Required",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"/posts/{id}\"}"
-                )
-            )
+            description = "Authentication required"
         ),
         @ApiResponse(
             responseCode = "403", 
-            description = "Not authorized to update this post",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authorization Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"You can only update your own posts\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Not authorized to update this post"
         ),
         @ApiResponse(
             responseCode = "404", 
-            description = "Post not found",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Post Not Found",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":404,\"error\":\"Not Found\",\"message\":\"Post not found with id: 123e4567-e89b-12d3-a456-426614174000\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Post not found"
         )
     })
     @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Post', 'update')")
@@ -271,36 +240,15 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "401", 
-            description = "Authentication required",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authentication Required",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"/posts/{id}\"}"
-                )
-            )
+            description = "Authentication required"
         ),
         @ApiResponse(
             responseCode = "403", 
-            description = "Not authorized to delete this post",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Authorization Error",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"You can only delete your own posts\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Not authorized to delete this post"
         ),
         @ApiResponse(
             responseCode = "404", 
-            description = "Post not found",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                examples = @ExampleObject(
-                    name = "Post Not Found",
-                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":404,\"error\":\"Not Found\",\"message\":\"Post not found with id: 123e4567-e89b-12d3-a456-426614174000\",\"path\":\"/posts/123e4567-e89b-12d3-a456-426614174000\"}"
-                )
-            )
+            description = "Post not found"
         )
     })
     @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Post', 'delete')")
@@ -310,5 +258,16 @@ public class PostController {
 
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private UUID extractUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return null;
     }
 }
