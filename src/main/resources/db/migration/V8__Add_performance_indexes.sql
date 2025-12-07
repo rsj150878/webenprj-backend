@@ -19,5 +19,3 @@ CREATE INDEX idx_users_username ON users(username);
 -- Index on users.active for faster filtering of active/inactive users
 CREATE INDEX idx_users_active ON users(active);
 
--- Composite index on media for faster user media lookups
-CREATE INDEX idx_media_user_id_created_at ON media(user_id, created_at DESC);

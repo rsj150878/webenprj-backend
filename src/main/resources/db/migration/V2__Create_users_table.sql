@@ -8,7 +8,8 @@ CREATE TABLE users (
                        profile_image_url VARCHAR(500) NOT NULL,
                        role VARCHAR(20) NOT NULL,
                        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                       updated_at DATETIME NULL
+                       updated_at DATETIME NULL,
+                       active tinyint default(1)
 );
 
 
@@ -19,7 +20,7 @@ VALUES
     (UUID_TO_BIN('a8f23b8e-2a40-4f1a-9e7d-21a4c7c89d12'),
      'anna.schmidt@example.com',
      'study_anna',
-     '$2b$10$5MVm5zaM/FQtn8kbkIO68On/JjFPQawxzZQR.9XHH113sGAiJj9Y6',
+     'Password123!',
      'AT',
      'https://example.com/images/profile1.png',
      'USER',
@@ -28,7 +29,7 @@ VALUES
     (UUID_TO_BIN('b6d5e90c-3e55-4c5f-bc1d-6720a2c841a9'),
      'max.meier@example.com',
      'maxlearns',
-     '$2b$10$5MVm5zaM/FQtn8kbkIO68On/JjFPQawxzZQR.9XHH113sGAiJj9Y6',
+     'Password123!',
      'DE',
      'https://example.com/images/profile2.png',
      'USER',
@@ -37,7 +38,7 @@ VALUES
     (UUID_TO_BIN('c27f9b6b-6c8d-4d62-9e3a-1e8d87c7adf0'),
      'admin@motivise.app',
      'motadmin',
-     '$2b$10$atpVP4UA/HL0mFGLwUPBdOYUNec19T/Siv5iCV766Nek3ZGQBXLrq',
+     'AdminPass456!',
      'CH',
      'https://example.com/images/admin.png',
      'ADMIN',
