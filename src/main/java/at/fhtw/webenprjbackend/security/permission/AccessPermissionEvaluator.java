@@ -1,4 +1,4 @@
-package at.fhtw.webenprjbackend.security;
+package at.fhtw.webenprjbackend.security.permission;
 
 import java.io.Serializable;
 import java.util.List;

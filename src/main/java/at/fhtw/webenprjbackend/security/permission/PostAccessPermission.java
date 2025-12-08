@@ -1,7 +1,8 @@
-package at.fhtw.webenprjbackend.security;
+package at.fhtw.webenprjbackend.security.permission;
 
 import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.repository.PostRepository;
+import at.fhtw.webenprjbackend.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;

@@ -76,6 +76,11 @@ public class MockFileStorageConfig {
             log.info("✅ Mock file loaded: {}", mockFile.originalName);
             return new ByteArrayInputStream(mockFile.content);
         }
+
+        @Override
+        public void delete(String id) {
+
+        }
     }
 
     /**
