@@ -1,13 +1,13 @@
-package at.fhtw.webenprjbackend.security;
+package at.fhtw.webenprjbackend.security.permission;
 
 import at.fhtw.webenprjbackend.entity.Media;
 import at.fhtw.webenprjbackend.repository.MediaRepository;
+import at.fhtw.webenprjbackend.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.ThemeResolver;
 
 import java.util.UUID;
 

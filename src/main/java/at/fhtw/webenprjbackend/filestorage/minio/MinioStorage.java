@@ -2,6 +2,7 @@ package at.fhtw.webenprjbackend.filestorage.minio;
 
 import java.io.InputStream;
 
+import io.minio.RemoveObjectArgs;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -52,6 +53,21 @@ public class MinioStorage implements FileStorage {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load file from MinIO", e);
         }
+    }
+
+    @Override
+    public void delete(String id) {
+        try {
+           minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(minioProperties.getBucketName())
+                            .object(id)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete file from MinIO", e);
+        }
+
     }
 }
 

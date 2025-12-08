@@ -9,7 +9,7 @@
  * <ul>
  *   <li>{@link at.fhtw.webenprjbackend.security.SecurityConfiguration}
  *       - Main Spring Security configuration, filter chain, CORS, security headers</li>
- *   <li>{@link at.fhtw.webenprjbackend.security.CustomUserDetailsService}
+ *   <li>{@link at.fhtw.webenprjbackend.service.CustomUserDetailsService}
  *       - Loads user data for authentication, supports email OR username login</li>
  *   <li>{@link at.fhtw.webenprjbackend.security.UserPrincipal}
  *       - Custom UserDetails implementation, adapts User entity to Spring Security</li>
@@ -29,13 +29,13 @@
  *
  * <p><b>Permission System:</b>
  * <ul>
- *   <li>{@link at.fhtw.webenprjbackend.security.AccessPermissionEvaluator}
+ *   <li>{@link at.fhtw.webenprjbackend.security.permission.AccessPermissionEvaluator}
  *       - Custom PermissionEvaluator for fine-grained authorization</li>
- *   <li>{@link at.fhtw.webenprjbackend.security.AccessPermission}
+ *   <li>{@link at.fhtw.webenprjbackend.security.permission.AccessPermission}
  *       - Interface for resource-specific permission handlers</li>
- *   <li>{@link at.fhtw.webenprjbackend.security.PostAccessPermission}
+ *   <li>{@link at.fhtw.webenprjbackend.security.permission.PostAccessPermission}
  *       - Implements "user owns post OR is admin" logic for post operations</li>
- *   <li>{@link at.fhtw.webenprjbackend.security.PermissionConfiguration}
+ *   <li>{@link at.fhtw.webenprjbackend.security.permission.PermissionConfiguration}
  *       - Registers permission evaluator with Spring Security</li>
  * </ul>
  *
@@ -43,7 +43,7 @@
  * <ol>
  *   <li>User sends credentials to {@code POST /auth/login}</li>
  *   <li>{@link at.fhtw.webenprjbackend.service.AuthService} calls AuthenticationManager</li>
- *   <li>AuthenticationManager delegates to {@link at.fhtw.webenprjbackend.security.CustomUserDetailsService}</li>
+ *   <li>AuthenticationManager delegates to {@link at.fhtw.webenprjbackend.service.CustomUserDetailsService}</li>
  *   <li>CustomUserDetailsService loads user from database, converts to {@link at.fhtw.webenprjbackend.security.UserPrincipal}</li>
  *   <li>AuthenticationManager verifies password using BCrypt</li>
  *   <li>On success, {@link at.fhtw.webenprjbackend.security.jwt.JwtIssuer} generates signed token</li>
@@ -59,7 +59,7 @@
  *   <li>Sets {@link org.springframework.security.core.context.SecurityContextHolder} with authenticated user</li>
  *   <li>Request proceeds to controller</li>
  *   <li>Spring Security checks {@code @PreAuthorize} annotations (if present)</li>
- *   <li>For custom permissions (e.g., {@code hasPermission()}), delegates to {@link at.fhtw.webenprjbackend.security.AccessPermissionEvaluator}</li>
+ *   <li>For custom permissions (e.g., {@code hasPermission()}), delegates to {@link at.fhtw.webenprjbackend.security.permission.AccessPermissionEvaluator}</li>
  *   <li>If authorized, controller method executes; otherwise returns 403 Forbidden</li>
  * </ol>
  *

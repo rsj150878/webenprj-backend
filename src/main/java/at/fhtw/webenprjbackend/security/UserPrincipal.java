@@ -1,6 +1,7 @@
 package at.fhtw.webenprjbackend.security;
 
 import at.fhtw.webenprjbackend.entity.User;
+import at.fhtw.webenprjbackend.service.CustomUserDetailsService;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

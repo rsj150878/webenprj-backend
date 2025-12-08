@@ -144,6 +144,21 @@ public class MediaController {
                 .contentType(mediaType)
                 .body(resource);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Media', 'delete')")
+    public ResponseEntity<Void> delete(
+            @Parameter(description = "Media UUID", required = true)
+            @PathVariable UUID id) {
+
+        log.info("Deleting media file: id={}", id);
+
+
+        mediaService.delete(id);
+
+
+        return ResponseEntity.noContent().build();
+    }
 }
 
 

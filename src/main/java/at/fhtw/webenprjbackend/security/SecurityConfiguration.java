@@ -3,6 +3,7 @@ package at.fhtw.webenprjbackend.security;
 import java.util.Arrays;
 import java.util.List;
 
+import at.fhtw.webenprjbackend.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
