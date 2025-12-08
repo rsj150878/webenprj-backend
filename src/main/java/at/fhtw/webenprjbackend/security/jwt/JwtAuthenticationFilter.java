@@ -2,7 +2,7 @@ package at.fhtw.webenprjbackend.security.jwt;
 
 import java.io.IOException;
 
-import at.fhtw.webenprjbackend.security.CustomUserDetailsService;
+import at.fhtw.webenprjbackend.service.CustomUserDetailsService;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
