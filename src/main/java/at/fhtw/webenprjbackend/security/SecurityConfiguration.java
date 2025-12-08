@@ -170,7 +170,6 @@ public class SecurityConfiguration {
             ));
         } else {
             // Production: Use environment variable for frontend URL
-            // Set CORS_ALLOWED_ORIGINS in .env file
             config.setAllowedOrigins(resolveProductionOrigins());
         }
 
