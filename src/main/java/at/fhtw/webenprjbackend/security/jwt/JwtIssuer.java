@@ -1,14 +1,16 @@
 package at.fhtw.webenprjbackend.security.jwt;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class JwtIssuer implements TokenIssuer {
@@ -31,9 +33,9 @@ public class JwtIssuer implements TokenIssuer {
         Date expiry = new Date(now.getTime() + jwtProperties.getExpirationMs());
 
         return Jwts.builder()
-                .subject(username)                  // subject = login identifier (e.g. email)
-                .claim("uid", userId.toString())    // user id
-                .claim("role", role)                // e.g. ROLE_USER, ROLE_ADMIN
+                .subject(username)
+                .claim("uid", userId.toString())
+                .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)

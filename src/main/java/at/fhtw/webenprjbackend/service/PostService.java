@@ -19,37 +19,12 @@ import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
 import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.FollowRepository;
-import at.fhtw.webenprjbackend.repository.PostRepository;
 import at.fhtw.webenprjbackend.repository.PostLikeRepository;
+import at.fhtw.webenprjbackend.repository.PostRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
- * Service layer for managing study posts in the Motivise platform.
- *
- * <p>This service handles all business logic related to study posts including:
- * <ul>
- *   <li>Creating new posts with automatic subject normalization</li>
- *   <li>Retrieving posts (all, by ID, or filtered by search)</li>
- *   <li>Updating existing posts with ownership validation at controller layer</li>
- *   <li>Deleting posts with authorization handled via Spring Security</li>
- *   <li>Searching posts by content keywords</li>
- * </ul>
- *
- * <p><b>Design Decisions:</b>
- * <ul>
- *   <li><b>Subject Normalization:</b> Posts are stored without leading '#' in the database
- *       for consistency, but the '#' is added back in responses for frontend display.
- *       This allows flexible frontend rendering while maintaining clean data storage.</li>
- *   <li><b>Authorization:</b> Post ownership and permission checks are performed at the
- *       controller layer using Spring Security's @PreAuthorize annotations, keeping
- *       service methods focused on business logic rather than security concerns.</li>
- *   <li><b>User Association:</b> Posts maintain a mandatory relationship with their author
- *       to support features like user profiles and content moderation.</li>
- * </ul>
- *
- * @see Post
- * @see PostRepository
- * @see PostController
+ * Service for creating, reading, updating and deleting posts.
  */
 @Service
 @Transactional(readOnly = true)
@@ -60,8 +35,10 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final FollowRepository followRepository;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository,
-                       PostLikeRepository postLikeRepository, FollowRepository followRepository) {
+    public PostService(PostRepository postRepository,
+                       UserRepository userRepository,
+                       PostLikeRepository postLikeRepository,
+                       FollowRepository followRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postLikeRepository = postLikeRepository;
@@ -79,12 +56,15 @@ public class PostService {
         }
         User current = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
         var follows = followRepository.findByFollower(current, Pageable.unpaged()).stream()
                 .map(f -> f.getFollowed().getId())
                 .toList();
+
         if (follows.isEmpty()) {
             return Page.empty(pageable);
         }
+
         Page<Post> posts = postRepository.findByUserIdInOrderByCreatedAtDesc(follows, pageable);
         return mapPageWithLikes(posts, currentUserId);
     }
@@ -136,16 +116,6 @@ public class PostService {
         return mapSingleWithLikes(saved, null);
     }
 
-    /**
-     * Deletes a post by its ID.
-     *
-     * <p><b>Authorization Note:</b> Authorization checks (user owns post OR is admin)
-     * are handled at the controller layer via @PreAuthorize annotation.
-     * This service method assumes the caller has already been authorized.
-     *
-     * @param id the UUID of the post to delete
-     * @throws ResponseStatusException with NOT_FOUND status if post doesn't exist
-     */
     @Transactional
     public void deletePost(UUID id) {
         Post existing = postRepository.findById(id)
@@ -174,19 +144,7 @@ public class PostService {
     }
 
     /**
-     * Normalizes subject by removing leading '#' if present.
-     *
-     * <p>This ensures consistency in database storage while allowing frontend to display with '#'.
-     * The hashtag symbol is cosmetic for UI display - we store subjects without it to:
-     * <ul>
-     *   <li>Simplify database searches and filtering</li>
-     *   <li>Avoid duplicate symbols if users accidentally include it</li>
-     *   <li>Allow flexible frontend rendering (with or without '#')</li>
-     *   <li>Maintain clean, normalized data in the persistence layer</li>
-     * </ul>
-     *
-     * @param subject the subject to normalize (may or may not start with '#')
-     * @return normalized subject without leading '#', or null if input is null
+     * Removes a leading '#' from the subject for normalized storage.
      */
     private String normalizeSubject(String subject) {
         if (subject == null) {
@@ -196,26 +154,14 @@ public class PostService {
     }
 
     /**
-     * Converts a Post entity to a PostResponse DTO for API responses.
-     *
-     * <p>This method adds the '#' prefix back to the subject for frontend display,
-     * reversing the normalization performed during post creation/update.
-     * This separation of concerns allows:
-     * <ul>
-     *   <li>Clean data storage (no special characters in database)</li>
-     *   <li>Consistent UI display (always shows '#' to users)</li>
-     *   <li>Flexibility for future UI changes without database migrations</li>
-     * </ul>
-     *
-     * @param post the Post entity to convert
-     * @return PostResponse DTO with '#' prepended to subject
+     * Maps a post to a response and adds like information and a leading '#'.
      */
     private PostResponse mapToResponse(Post post, Map<UUID, Long> likeCounts, Set<UUID> likedByCurrentUser) {
         long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
         boolean isLiked = likedByCurrentUser.contains(post.getId());
         return new PostResponse(
                 post.getId(),
-                "#" + post.getSubject(), // Add '#' for frontend display
+                "#" + post.getSubject(),
                 post.getContent(),
                 post.getImageUrl(),
                 post.getCreatedAt(),
