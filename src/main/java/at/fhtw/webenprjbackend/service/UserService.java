@@ -21,50 +21,7 @@ import at.fhtw.webenprjbackend.repository.FollowRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
- * Service layer for comprehensive user management in the Motivise platform.
- *
- * <p>This service provides three distinct categories of user operations:
- * <ol>
- *   <li><b>Public Registration:</b> New user account creation with email/username uniqueness validation</li>
- *   <li><b>Self-Service:</b> Authenticated users managing their own profiles and passwords</li>
- *   <li><b>Administrative:</b> Admin-only operations for user management, search, and moderation</li>
- * </ol>
- *
- * <p><b>Key Features:</b>
- * <ul>
- *   <li><b>Secure Password Handling:</b> All passwords are hashed using BCrypt with 12 rounds
- *       before storage. Plaintext passwords are never stored in the database.</li>
- *   <li><b>Uniqueness Validation:</b> Email and username uniqueness is enforced both at the
- *       database level (unique constraints) and application level (validation before save)</li>
- *   <li><b>Account Status Management:</b> Users can be activated/deactivated by admins without
- *       data deletion, allowing account suspension and reinstatement</li>
- *   <li><b>Role-Based Access:</b> Supports USER and ADMIN roles with different privilege levels</li>
- *   <li><b>Profile Images:</b> Optional profile image URLs with default fallback</li>
- * </ul>
- *
- * <p><b>Design Decisions:</b>
- * <ul>
- *   <li><b>Separation of Concerns:</b> Self-service endpoints (/me) separate from admin
- *       endpoints to enforce clear permission boundaries and improve API discoverability</li>
- *   <li><b>Immutable User IDs:</b> UUID-based user IDs are never changeable, ensuring
- *       referential integrity across posts and other user-related entities</li>
- *   <li><b>Email as Login:</b> Users can log in with either email or username, providing
- *       flexibility while maintaining email uniqueness for account recovery</li>
- *   <li><b>Default Profile Images:</b> Users without uploaded images get a default avatar
- *       to ensure consistent UI rendering</li>
- * </ul>
- *
- * <p><b>Security Considerations:</b>
- * <ul>
- *   <li>Password changes require current password verification to prevent session hijacking attacks</li>
- *   <li>Admin operations check for role authorization via Spring Security's @PreAuthorize</li>
- *   <li>User searches are admin-only to prevent user enumeration attacks</li>
- *   <li>Email and username changes validate uniqueness to prevent identity conflicts</li>
- * </ul>
- *
- * @see User
- * @see UserRepository
- * @see UserController
+ * Service for user registration, profile management and admin user operations.
  */
 @Service
 @Transactional(readOnly = true)
@@ -108,7 +65,6 @@ public class UserService {
         );
 
         User saved = userRepository.save(newUser);
-
         return toResponse(saved);
     }
 
@@ -124,7 +80,6 @@ public class UserService {
         return toResponse(user);
     }
 
-
     // ======================== Self-Service for logged in users ========================
     public UserResponse getCurrentUser(UUID userId) {
         User user = userRepository.findById(userId)
@@ -137,7 +92,6 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // checks email/username uniqueness (exclude other user)
         validateUniqueEmailAndUsername(userId, request.getEmail(), request.getUsername());
 
         user.setEmail(request.getEmail());
@@ -171,18 +125,19 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // uniqueness checks
         validateUniqueEmailAndUsername(id, request.getEmail(), request.getUsername());
 
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
         user.setCountryCode(request.getCountryCode());
+
         if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().isBlank()) {
             user.setProfileImageUrl(request.getProfileImageUrl());
         }
         if (request.getRole() != null) {
             user.setRole(request.getRole());
         }
+
         user.setActive(request.isActive());
 
         User saved = userRepository.save(user);

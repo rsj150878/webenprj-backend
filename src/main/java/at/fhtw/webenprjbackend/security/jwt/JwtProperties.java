@@ -4,15 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "app.jwt")
 public class JwtProperties {
-    /**
-     * Secret key aus application.properties:
-     * app.jwt.secret=...
-     */
     private String secret;
-
-    /**
-     * app.jwt.expiration-ms=86400000
-     */
     private long expirationMs;
 
     public String getSecret() {
