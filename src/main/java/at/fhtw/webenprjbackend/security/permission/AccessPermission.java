@@ -1,5 +1,6 @@
-package at.fhtw.webenprjbackend.security;
+package at.fhtw.webenprjbackend.security.permission;
 
+import at.fhtw.webenprjbackend.security.UserPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;

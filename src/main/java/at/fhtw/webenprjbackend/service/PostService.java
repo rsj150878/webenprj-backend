@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import at.fhtw.webenprjbackend.controller.PostController;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ import at.fhtw.webenprjbackend.repository.UserRepository;
  *       This allows flexible frontend rendering while maintaining clean data storage.</li>
  *   <li><b>Authorization:</b> Post ownership and permission checks are performed at the
  *       controller layer using Spring Security's @PreAuthorize annotations, keeping
- *       service methods focused on business logic rather than security concerns.</li>
+x *       service methods focused on business logic rather than security concerns.</li>
  *   <li><b>User Association:</b> Posts maintain a mandatory relationship with their author
  *       to support features like user profiles and content moderation.</li>
  * </ul>

@@ -1,4 +1,4 @@
-package at.fhtw.webenprjbackend.security;
+package at.fhtw.webenprjbackend.security.permission;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

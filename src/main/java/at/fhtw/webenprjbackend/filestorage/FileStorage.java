@@ -11,4 +11,6 @@ public interface FileStorage {
     String upload(MultipartFile file);
 
     InputStream load(String id);
+
+    void delete(String id);
 }

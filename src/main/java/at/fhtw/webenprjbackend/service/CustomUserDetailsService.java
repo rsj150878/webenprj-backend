@@ -1,7 +1,8 @@
-package at.fhtw.webenprjbackend.security;
+package at.fhtw.webenprjbackend.service;
 
 import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.UserRepository;
+import at.fhtw.webenprjbackend.security.UserPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
