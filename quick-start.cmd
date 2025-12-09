@@ -37,7 +37,7 @@ echo - Zero Docker dependencies
 echo.
 echo TIP: Run 'quick-start.cmd info' to see URLs
 echo.
-
+set SPRING_PROFILES_ACTIVE=docker-free
 call mvnw.cmd spring-boot:run -Pdocker-free -DskipTests
 goto :end
 
