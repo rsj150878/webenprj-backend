@@ -57,6 +57,8 @@ echo - API documentation (Swagger)
 echo.
 echo TIP: Run 'start.cmd info' to see URLs
 echo.
+echo Clearing any previous Spring profile settings...
+set SPRING_PROFILES_ACTIVE=
 
 call mvnw.cmd spring-boot:run -DskipTests
 goto :end
