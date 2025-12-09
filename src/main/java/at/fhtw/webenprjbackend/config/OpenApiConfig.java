@@ -10,12 +10,6 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 /**
  * Central OpenAPI 3.0 configuration for the Motivise Study Platform API.
  * Defines global API documentation settings, security schemes, and server information.
- * 
- * This configuration provides:
- * - API metadata (title, version, description)
- * - JWT Bearer token authentication scheme
- * - Development and production server definitions
- * - Contact and license information
  */
 @Configuration
 @OpenAPIDefinition(
