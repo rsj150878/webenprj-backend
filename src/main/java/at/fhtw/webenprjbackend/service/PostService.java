@@ -151,15 +151,6 @@ public class PostService {
     /**
      * Normalizes subject by removing leading '#' if present.
      *
-     * <p>This ensures consistency in database storage while allowing frontend to display with '#'.
-     * The hashtag symbol is cosmetic for UI display - we store subjects without it to:
-     * <ul>
-     *   <li>Simplify database searches and filtering</li>
-     *   <li>Avoid duplicate symbols if users accidentally include it</li>
-     *   <li>Allow flexible frontend rendering (with or without '#')</li>
-     *   <li>Maintain clean, normalized data in the persistence layer</li>
-     * </ul>
-     *
      * @param subject the subject to normalize (may or may not start with '#')
      * @return normalized subject without leading '#', or null if input is null
      */
@@ -172,15 +163,6 @@ public class PostService {
 
     /**
      * Converts a Post entity to a PostResponse DTO for API responses.
-     *
-     * <p>This method adds the '#' prefix back to the subject for frontend display,
-     * reversing the normalization performed during post creation/update.
-     * This separation of concerns allows:
-     * <ul>
-     *   <li>Clean data storage (no special characters in database)</li>
-     *   <li>Consistent UI display (always shows '#' to users)</li>
-     *   <li>Flexibility for future UI changes without database migrations</li>
-     * </ul>
      *
      * @param post the Post entity to convert
      * @return PostResponse DTO with '#' prepended to subject
