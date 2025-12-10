@@ -1,6 +1,7 @@
 package at.fhtw.webenprjbackend.dto;
 
 import at.fhtw.webenprjbackend.entity.Role;
+import at.fhtw.webenprjbackend.validation.ValidCountryCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -35,9 +36,9 @@ public class AdminUserUpdateRequest {
     private String username;
 
     @NotBlank(message = "Country code is required")
-    @Pattern(regexp = "^[A-Z]{2}$", message = "Country code must be exactly 2 uppercase letters")
+    @ValidCountryCode
     @Schema(
-        description = "ISO 3166-1 alpha-2 country code", 
+        description = "ISO 3166-1 alpha-2 country code",
         example = "AT",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
