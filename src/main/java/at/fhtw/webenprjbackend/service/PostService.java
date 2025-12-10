@@ -118,11 +118,6 @@ public class PostService {
 
     /**
      * Deletes a post by its ID.
-     *
-     * <p><b>Authorization Note:</b> Authorization checks (user owns post OR is admin)
-     * are handled at the controller layer via @PreAuthorize annotation.
-     * This service method assumes the caller has already been authorized.
-     *
      * @param id the UUID of the post to delete
      * @throws ResponseStatusException with NOT_FOUND status if post doesn't exist
      */
