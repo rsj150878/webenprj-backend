@@ -24,10 +24,10 @@ public class UserRegistrationRequest {
     private String email;
 
     @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Size(min = 5, max = 50, message = "Username must be between 5 and 50 characters")
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
     @Schema(
-        description = "Unique username for the user (3-50 characters, letters, numbers, underscores only)", 
+        description = "Unique username for the user (5-50 characters, letters, numbers, underscores only)",
         example = "study_anna",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
