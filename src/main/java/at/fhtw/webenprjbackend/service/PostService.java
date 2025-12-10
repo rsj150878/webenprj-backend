@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import at.fhtw.webenprjbackend.controller.PostController;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -14,39 +13,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import at.fhtw.webenprjbackend.controller.PostController;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
 import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.FollowRepository;
-import at.fhtw.webenprjbackend.repository.PostRepository;
 import at.fhtw.webenprjbackend.repository.PostLikeRepository;
+import at.fhtw.webenprjbackend.repository.PostRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 
 /**
  * Service layer for managing study posts in the Motivise platform.
- *
- * <p>This service handles all business logic related to study posts including:
- * <ul>
- *   <li>Creating new posts with automatic subject normalization</li>
- *   <li>Retrieving posts (all, by ID, or filtered by search)</li>
- *   <li>Updating existing posts with ownership validation at controller layer</li>
- *   <li>Deleting posts with authorization handled via Spring Security</li>
- *   <li>Searching posts by content keywords</li>
- * </ul>
- *
- * <p><b>Design Decisions:</b>
- * <ul>
- *   <li><b>Subject Normalization:</b> Posts are stored without leading '#' in the database
- *       for consistency, but the '#' is added back in responses for frontend display.
- *       This allows flexible frontend rendering while maintaining clean data storage.</li>
- *   <li><b>Authorization:</b> Post ownership and permission checks are performed at the
- *       controller layer using Spring Security's @PreAuthorize annotations, keeping
-x *       service methods focused on business logic rather than security concerns.</li>
- *   <li><b>User Association:</b> Posts maintain a mandatory relationship with their author
- *       to support features like user profiles and content moderation.</li>
- * </ul>
  *
  * @see Post
  * @see PostRepository
