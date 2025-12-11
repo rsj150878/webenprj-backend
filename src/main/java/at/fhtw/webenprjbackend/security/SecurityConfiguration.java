@@ -152,7 +152,12 @@ public class SecurityConfiguration {
     }
 
     private boolean isDevelopmentProfile() {
-        return Arrays.stream(environment.getActiveProfiles())
+        String[] activeProfiles = environment.getActiveProfiles();
+        // If no profile is active (default profile), treat as development
+        if (activeProfiles.length == 0) {
+            return true;
+        }
+        return Arrays.stream(activeProfiles)
                 .anyMatch(profile -> profile.equals("dev") || profile.equals("docker-free"));
     }
 
