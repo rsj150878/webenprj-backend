@@ -19,6 +19,8 @@ import at.fhtw.webenprjbackend.entity.Role;
 import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.FollowRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
+import at.fhtw.webenprjbackend.dto.AdminUserResponse;
+
 
 /**
  * Service for user registration, profile management and admin user operations.
@@ -121,6 +123,13 @@ public class UserService {
 
     // ======================== Admin-Functions ========================
     @Transactional
+    public Page<AdminUserResponse> adminGetAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(this::toAdminResponse);
+    }
+
+
+    @Transactional
     public UserResponse adminUpdateUser(UUID id, AdminUserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -161,14 +170,14 @@ public class UserService {
         return toResponse(saved);
     }
 
-    public Page<UserResponse> adminSearchUsers(String query, Pageable pageable) {
+    public Page<AdminUserResponse> adminSearchUsers(String query, Pageable pageable) {
         if (query == null || query.isBlank()) {
-            return getAllUsers(pageable);
+            return adminGetAllUsers(pageable);
         }
         return userRepository
                 .findByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrCountryCodeContainingIgnoreCase(
                         query, query, query, pageable
-                ).map(this::toResponse);
+                ).map(this::toAdminResponse);
     }
 
     // ======================== Helper ========================
@@ -200,4 +209,19 @@ public class UserService {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use.");
                 });
     }
+
+    private AdminUserResponse toAdminResponse(User user) {
+        return new AdminUserResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getCountryCode(),
+                user.getProfileImageUrl(),
+                user.getRole().name(),
+                user.isActive(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+        );
+    }
+
 }
