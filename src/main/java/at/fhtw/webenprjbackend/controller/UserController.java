@@ -2,6 +2,7 @@ package at.fhtw.webenprjbackend.controller;
 
 import java.util.UUID;
 
+import at.fhtw.webenprjbackend.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,11 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
-import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
-import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
-import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
-import at.fhtw.webenprjbackend.dto.UserResponse;
 import at.fhtw.webenprjbackend.security.UserPrincipal;
 import at.fhtw.webenprjbackend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -270,7 +266,7 @@ public class UserController {
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<UserResponse>> getAllUsers(
+    public ResponseEntity<Page<AdminUserResponse>> getAllUsers(
             @Parameter(
                 description = "Optional search query to filter users by email, username, or country code (case-insensitive)",
                 example = "anna",
@@ -286,7 +282,7 @@ public class UserController {
         if (search != null && !search.isBlank()) {
             return ResponseEntity.ok(userService.adminSearchUsers(search, pageable));
         }
-        return ResponseEntity.ok(userService.getAllUsers(pageable));
+        return ResponseEntity.ok(userService.adminGetAllUsers(pageable));
     }
 
     @GetMapping("/{id}")
