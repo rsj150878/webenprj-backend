@@ -36,13 +36,13 @@ public class PostCreateRequest {
 
     @Size(max = 500, message = "Image URL cannot exceed 500 characters")
     @Pattern(
-        regexp = "^(https?://).*\\.(jpg|jpeg|png|gif|webp)$",
-        message = "Must be a valid HTTP(S) URL ending with jpg, jpeg, png, gif, or webp",
+        regexp = "^(https?://.*\\.(jpg|jpeg|png|gif|webp)|/medias/[a-fA-F0-9\\-]{36})$",
+        message = "Must be a valid HTTP(S) URL ending with image extension (jpg, jpeg, png, gif, webp) or internal media path (/medias/{uuid})",
         flags = Pattern.Flag.CASE_INSENSITIVE
     )
     @Schema(
-        description = "Optional image URL to accompany the post (study screenshots, diagrams, etc.)", 
-        example = "https://example.com/images/spring-boot-diagram.png",
+        description = "Optional image URL to accompany the post (external HTTP(S) URL or internal /medias/{uuid} path)",
+        example = "/medias/550e8400-e29b-41d4-a716-446655440000",
         nullable = true
     )
     private String imageUrl;
