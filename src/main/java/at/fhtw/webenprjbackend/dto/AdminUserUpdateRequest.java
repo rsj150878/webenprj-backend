@@ -45,9 +45,14 @@ public class AdminUserUpdateRequest {
     private String countryCode;
 
     @Size(max = 500, message = "Profile image URL cannot exceed 500 characters")
+    @Pattern(
+        regexp = "^(/medias/[a-fA-F0-9-]{36}|(https?://).*\\.(jpg|jpeg|png|gif|webp|avif))$",
+        message = "Must be either a media reference (/medias/{uuid}) or a valid HTTP(S) URL ending with jpg, jpeg, png, gif, webp, or avif",
+        flags = Pattern.Flag.CASE_INSENSITIVE
+    )
     @Schema(
-        description = "URL to user's profile image", 
-        example = "https://example.com/images/profile1.png",
+        description = "URL to user's profile image - can be a media reference (/medias/{uuid}) or external URL",
+        example = "/medias/123e4567-e89b-12d3-a456-426614174000",
         nullable = true
     )
     private String profileImageUrl;
