@@ -43,6 +43,11 @@ public record PostResponse(
                 requiredMode = Schema.RequiredMode.REQUIRED)
         String username,
 
+        @Schema(description = "Profile image URL of the post author",
+                example = "/medias/123e4567-e89b-12d3-a456-426614174000",
+                nullable = true)
+        String userProfileImageUrl,
+
         @Schema(description = "Number of likes for this post",
                 example = "12",
                 requiredMode = Schema.RequiredMode.REQUIRED)
