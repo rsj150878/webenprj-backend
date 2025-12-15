@@ -179,6 +179,7 @@ public class PostService {
                 post.getUpdatedAt(),
                 post.getUser().getId(),
                 post.getUser().getUsername(),
+                post.getUser().getProfileImageUrl(),
                 likeCount,
                 isLiked
         );
