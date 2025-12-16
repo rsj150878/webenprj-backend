@@ -39,13 +39,16 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostLikeRepository postLikeRepository;
     private final FollowRepository followRepository;
+    private final BookmarkService bookmarkService;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
-                       PostLikeRepository postLikeRepository, FollowRepository followRepository) {
+                       PostLikeRepository postLikeRepository, FollowRepository followRepository,
+                       BookmarkService bookmarkService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postLikeRepository = postLikeRepository;
         this.followRepository = followRepository;
+        this.bookmarkService = bookmarkService;
     }
 
     public Page<PostResponse> getAllPosts(Pageable pageable, UUID currentUserId) {
@@ -167,9 +170,12 @@ public class PostService {
      * @param post the Post entity to convert
      * @return PostResponse DTO with '#' prepended to subject
      */
-    private PostResponse mapToResponse(Post post, Map<UUID, Long> likeCounts, Set<UUID> likedByCurrentUser) {
+    private PostResponse mapToResponse(Post post, Map<UUID, Long> likeCounts, Set<UUID> likedByCurrentUser,
+                                        Map<UUID, Long> bookmarkCounts, Set<UUID> bookmarkedByCurrentUser) {
         long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
         boolean isLiked = likedByCurrentUser.contains(post.getId());
+        long bookmarkCount = bookmarkCounts.getOrDefault(post.getId(), 0L);
+        boolean isBookmarked = bookmarkedByCurrentUser.contains(post.getId());
         return new PostResponse(
                 post.getId(),
                 "#" + post.getSubject(), // Add '#' for frontend display
@@ -181,20 +187,26 @@ public class PostService {
                 post.getUser().getUsername(),
                 post.getUser().getProfileImageUrl(),
                 likeCount,
-                isLiked
+                isLiked,
+                bookmarkCount,
+                isBookmarked
         );
     }
 
     private Page<PostResponse> mapPageWithLikes(Page<Post> posts, UUID currentUserId) {
         Map<UUID, Long> likeCounts = fetchLikeCounts(posts.getContent());
         Set<UUID> likedByCurrentUser = fetchLikedPostIds(posts.getContent(), currentUserId);
-        return posts.map(post -> mapToResponse(post, likeCounts, likedByCurrentUser));
+        Map<UUID, Long> bookmarkCounts = bookmarkService.fetchBookmarkCounts(posts.getContent());
+        Set<UUID> bookmarkedByCurrentUser = bookmarkService.fetchBookmarkedPostIds(posts.getContent(), currentUserId);
+        return posts.map(post -> mapToResponse(post, likeCounts, likedByCurrentUser, bookmarkCounts, bookmarkedByCurrentUser));
     }
 
     private PostResponse mapSingleWithLikes(Post post, UUID currentUserId) {
         Map<UUID, Long> likeCounts = fetchLikeCounts(List.of(post));
         Set<UUID> likedByCurrentUser = fetchLikedPostIds(List.of(post), currentUserId);
-        return mapToResponse(post, likeCounts, likedByCurrentUser);
+        Map<UUID, Long> bookmarkCounts = bookmarkService.fetchBookmarkCounts(List.of(post));
+        Set<UUID> bookmarkedByCurrentUser = bookmarkService.fetchBookmarkedPostIds(List.of(post), currentUserId);
+        return mapToResponse(post, likeCounts, likedByCurrentUser, bookmarkCounts, bookmarkedByCurrentUser);
     }
 
     private Map<UUID, Long> fetchLikeCounts(List<Post> posts) {
