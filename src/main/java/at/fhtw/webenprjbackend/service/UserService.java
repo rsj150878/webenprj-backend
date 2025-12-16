@@ -162,12 +162,12 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse adminToggleActive(UUID id, boolean active) {
+    public AdminUserResponse adminToggleActive(UUID id, boolean active) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         user.setActive(active);
         User saved = userRepository.save(user);
-        return toResponse(saved);
+        return toAdminResponse(saved);
     }
 
     public Page<AdminUserResponse> adminSearchUsers(String query, Pageable pageable) {

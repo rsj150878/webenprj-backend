@@ -421,13 +421,13 @@ public class UserController {
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> adminSetUserActive(
-            @Parameter(description = "User UUID", required = true) 
+    public ResponseEntity<AdminUserResponse> adminSetUserActive(
+            @Parameter(description = "User UUID", required = true)
             @PathVariable UUID id,
-            @Parameter(description = "Set user active status", required = true, example = "true") 
+            @Parameter(description = "Set user active status", required = true, example = "true")
             @RequestParam("active") boolean active) {
 
-        UserResponse updated = userService.adminToggleActive(id, active);
+        AdminUserResponse updated = userService.adminToggleActive(id, active);
         return ResponseEntity.ok(updated);
     }
 }
