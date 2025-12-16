@@ -1,5 +1,6 @@
 package at.fhtw.webenprjbackend.service;
 
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -30,7 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // Only active accounts may authenticate
         if (!user.isActive()) {
-            throw new UsernameNotFoundException("User account is disabled");
+            throw new DisabledException("Your account has been deactivated. Please contact support.");
         }
 
         return UserPrincipal.fromUser(user);
