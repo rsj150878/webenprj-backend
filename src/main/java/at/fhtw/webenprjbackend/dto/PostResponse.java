@@ -56,5 +56,15 @@ public record PostResponse(
         @Schema(description = "Whether the current user liked this post",
                 example = "true",
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        boolean likedByCurrentUser
+        boolean likedByCurrentUser,
+
+        @Schema(description = "Number of bookmarks for this post (social proof)",
+                example = "5",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        long bookmarkCount,
+
+        @Schema(description = "Whether the current user bookmarked this post",
+                example = "true",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean bookmarkedByCurrentUser
 ) { }
