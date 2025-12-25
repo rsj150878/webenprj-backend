@@ -140,6 +140,37 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostById(id, currentUserId));
     }
 
+    @GetMapping("/{id}/comments")
+    @Operation(
+        summary = "Get comments for a post",
+        description = "Retrieve all direct comments on a post, paginated and ordered by creation time ascending."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Comments retrieved successfully",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = PostResponse.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Post not found"
+        )
+    })
+    public ResponseEntity<Page<PostResponse>> getComments(
+            @Parameter(description = "Post UUID", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size,
+            Authentication authentication) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt"));
+        UUID currentUserId = extractUserId(authentication);
+        return ResponseEntity.ok(postService.getCommentsForPost(id, pageable, currentUserId));
+    }
+
     // ===============================
     // POST Operations (Create)
     // ===============================

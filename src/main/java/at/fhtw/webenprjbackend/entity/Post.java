@@ -6,13 +6,20 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 /**
@@ -57,6 +64,27 @@ public class Post {
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    /**
+     * Parent post if this is a comment/reply. {@code null} for top-level posts.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Post parent;
+
+    /**
+     * Child comments on this post, ordered by creation time ascending.
+     */
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
+    private List<Post> comments = new ArrayList<>();
+
+    /**
+     * Soft delete flag. When {@code false}, the post is considered deleted
+     * but remains in the database for reference by child comments.
+     */
+    @Column(nullable = false)
+    private boolean active = true;
 
     /**
      * Timestamp when the post was created. Set automatically on insert.
@@ -129,6 +157,44 @@ public class Post {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public Post getParent() {
+        return parent;
+    }
+
+    public void setParent(Post parent) {
+        this.parent = parent;
+    }
+
+    public List<Post> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Post> comments) {
+        this.comments = comments;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    /**
+     * Helper method to check if this post is a comment (has a parent).
+     */
+    public boolean isComment() {
+        return parent != null;
+    }
+
+    /**
+     * Helper method to check if this post has been soft-deleted.
+     */
+    public boolean isDeleted() {
+        return !active;
     }
 
 }

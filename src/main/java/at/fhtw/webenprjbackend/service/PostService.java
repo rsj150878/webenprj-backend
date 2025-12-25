@@ -52,7 +52,8 @@ public class PostService {
     }
 
     public Page<PostResponse> getAllPosts(Pageable pageable, UUID currentUserId) {
-        Page<Post> posts = postRepository.findAllByOrderByCreatedAtDesc(pageable);
+        // Only return active top-level posts (not comments)
+        Page<Post> posts = postRepository.findByParentIsNullAndActiveTrueOrderByCreatedAtDesc(pageable);
         return mapPageWithLikes(posts, currentUserId);
     }
 
@@ -68,13 +69,15 @@ public class PostService {
         if (follows.isEmpty()) {
             return Page.empty(pageable);
         }
-        Page<Post> posts = postRepository.findByUserIdInOrderByCreatedAtDesc(follows, pageable);
+        // Only return active top-level posts (not comments)
+        Page<Post> posts = postRepository.findByParentIsNullAndActiveTrueAndUserIdInOrderByCreatedAtDesc(follows, pageable);
         return mapPageWithLikes(posts, currentUserId);
     }
 
     public PostResponse getPostById(UUID id, UUID currentUserId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        // Allow fetching inactive posts (to show "original post was deleted" message)
         return mapSingleWithLikes(post, currentUserId);
     }
 
@@ -93,8 +96,31 @@ public class PostService {
                 user
         );
 
+        // Handle parent post for comments
+        if (request.getParentId() != null) {
+            Post parent = postRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent post not found"));
+            if (!parent.isActive()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot comment on a deleted post");
+            }
+            post.setParent(parent);
+        }
+
         Post saved = postRepository.save(post);
         return mapSingleWithLikes(saved, userId);
+    }
+
+    /**
+     * Get comments for a post (paginated).
+     */
+    public Page<PostResponse> getCommentsForPost(UUID postId, Pageable pageable, UUID currentUserId) {
+        // Verify parent exists
+        if (!postRepository.existsById(postId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
+
+        Page<Post> comments = postRepository.findByParentIdAndActiveTrueOrderByCreatedAtAsc(postId, pageable);
+        return mapPageWithLikes(comments, currentUserId);
     }
 
     @Transactional
@@ -120,7 +146,10 @@ public class PostService {
     }
 
     /**
-     * Deletes a post by its ID.
+     * Soft-deletes a post by setting its active flag to false.
+     * The post remains in the database so child comments can display
+     * "original post was deleted" message.
+     *
      * @param id the UUID of the post to delete
      * @throws ResponseStatusException with NOT_FOUND status if post doesn't exist
      */
@@ -130,14 +159,17 @@ public class PostService {
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
-        postRepository.delete(existing);
+        existing.setActive(false);
+        postRepository.save(existing);
     }
 
     public Page<PostResponse> searchPosts(String keyword, Pageable pageable, UUID currentUserId) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllPosts(pageable, currentUserId);
         }
-        Page<Post> posts = postRepository.findByContentContainingIgnoreCase(keyword.trim(), pageable);
+        // Only search active top-level posts (not comments)
+        Page<Post> posts = postRepository.findByParentIsNullAndActiveTrueAndContentContainingIgnoreCase(
+                keyword.trim(), pageable);
         return mapPageWithLikes(posts, currentUserId);
     }
 
@@ -147,7 +179,8 @@ public class PostService {
 
     public Page<PostResponse> searchBySubject(String subject, Pageable pageable, UUID currentUserId) {
         String normalized = normalizeSubject(subject);
-        Page<Post> posts = postRepository.findBySubjectIgnoreCase(normalized, pageable);
+        // Only search active top-level posts (not comments)
+        Page<Post> posts = postRepository.findByParentIsNullAndActiveTrueAndSubjectIgnoreCase(normalized, pageable);
         return mapPageWithLikes(posts, currentUserId);
     }
 
@@ -171,13 +204,22 @@ public class PostService {
      * @return PostResponse DTO with '#' prepended to subject
      */
     private PostResponse mapToResponse(Post post, Map<UUID, Long> likeCounts, Set<UUID> likedByCurrentUser,
-                                        Map<UUID, Long> bookmarkCounts, Set<UUID> bookmarkedByCurrentUser) {
+                                        Map<UUID, Long> bookmarkCounts, Set<UUID> bookmarkedByCurrentUser,
+                                        Map<UUID, Long> commentCounts) {
         long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
         boolean isLiked = likedByCurrentUser.contains(post.getId());
         long bookmarkCount = bookmarkCounts.getOrDefault(post.getId(), 0L);
         boolean isBookmarked = bookmarkedByCurrentUser.contains(post.getId());
+        long commentCount = commentCounts.getOrDefault(post.getId(), 0L);
+
+        // Check if parent post is deleted
+        boolean parentDeleted = post.getParent() != null && !post.getParent().isActive();
+
         return new PostResponse(
                 post.getId(),
+                post.getParent() != null ? post.getParent().getId() : null,
+                commentCount,
+                parentDeleted,
                 "#" + post.getSubject(), // Add '#' for frontend display
                 post.getContent(),
                 post.getImageUrl(),
@@ -198,7 +240,8 @@ public class PostService {
         Set<UUID> likedByCurrentUser = fetchLikedPostIds(posts.getContent(), currentUserId);
         Map<UUID, Long> bookmarkCounts = bookmarkService.fetchBookmarkCounts(posts.getContent());
         Set<UUID> bookmarkedByCurrentUser = bookmarkService.fetchBookmarkedPostIds(posts.getContent(), currentUserId);
-        return posts.map(post -> mapToResponse(post, likeCounts, likedByCurrentUser, bookmarkCounts, bookmarkedByCurrentUser));
+        Map<UUID, Long> commentCounts = fetchCommentCounts(posts.getContent());
+        return posts.map(post -> mapToResponse(post, likeCounts, likedByCurrentUser, bookmarkCounts, bookmarkedByCurrentUser, commentCounts));
     }
 
     private PostResponse mapSingleWithLikes(Post post, UUID currentUserId) {
@@ -206,7 +249,8 @@ public class PostService {
         Set<UUID> likedByCurrentUser = fetchLikedPostIds(List.of(post), currentUserId);
         Map<UUID, Long> bookmarkCounts = bookmarkService.fetchBookmarkCounts(List.of(post));
         Set<UUID> bookmarkedByCurrentUser = bookmarkService.fetchBookmarkedPostIds(List.of(post), currentUserId);
-        return mapToResponse(post, likeCounts, likedByCurrentUser, bookmarkCounts, bookmarkedByCurrentUser);
+        Map<UUID, Long> commentCounts = fetchCommentCounts(List.of(post));
+        return mapToResponse(post, likeCounts, likedByCurrentUser, bookmarkCounts, bookmarkedByCurrentUser, commentCounts);
     }
 
     private Map<UUID, Long> fetchLikeCounts(List<Post> posts) {
@@ -227,5 +271,20 @@ public class PostService {
         }
         List<UUID> postIds = posts.stream().map(Post::getId).toList();
         return Set.copyOf(postLikeRepository.findLikedPostIds(currentUserId, postIds));
+    }
+
+    /**
+     * Batch fetch comment counts for a list of posts to prevent N+1 queries.
+     */
+    private Map<UUID, Long> fetchCommentCounts(List<Post> posts) {
+        if (posts.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> postIds = posts.stream().map(Post::getId).toList();
+        return postRepository.countCommentsByParentIds(postIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 }
