@@ -63,6 +63,7 @@ public class UserService {
                 passwordEncoder.encode(request.getPassword()),
                 request.getCountryCode(),
                 request.hasProfileImage() ? request.getProfileImageUrl() : defaultProfileImage,
+                request.getSalutation(),
                 Role.USER
         );
 
@@ -99,6 +100,7 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
         user.setCountryCode(request.getCountryCode());
+        user.setSalutation(request.getSalutation());
 
         if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().isBlank()) {
             user.setProfileImageUrl(request.getProfileImageUrl());
@@ -188,6 +190,7 @@ public class UserService {
                 user.getUsername(),
                 user.getCountryCode(),
                 user.getProfileImageUrl(),
+                user.getSalutation(),
                 user.getRole().name(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
