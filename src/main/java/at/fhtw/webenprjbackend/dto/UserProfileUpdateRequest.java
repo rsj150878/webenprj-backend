@@ -57,6 +57,14 @@ public class UserProfileUpdateRequest {
     )
     private String profileImageUrl;
 
+    @Size(max = 48, message = "Salutation cannot exceed 48 characters")
+    @Schema(
+        description = "Updated salutation or title (optional)",
+        example = "Dr.",
+        nullable = true
+    )
+    private String salutation;
+
     // ===============================
     // Constructors
     // ===============================
@@ -124,8 +132,16 @@ public class UserProfileUpdateRequest {
         return profileImageUrl; 
     }
     
-    public void setProfileImageUrl(String profileImageUrl) { 
-        this.profileImageUrl = profileImageUrl; 
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getSalutation() {
+        return salutation;
+    }
+
+    public void setSalutation(String salutation) {
+        this.salutation = salutation;
     }
 
     // ===============================

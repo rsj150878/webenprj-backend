@@ -63,6 +63,13 @@ public class User {
     private String profileImageUrl;
 
     /**
+     * Optional salutation or title (e.g., "Dr.", "Prof.", custom text).
+     * Max 48 characters, used for personalized display.
+     */
+    @Column(name = "salutation", length = 48)
+    private String salutation;
+
+    /**
      * Role determining the user's permission level.
      */
     @Enumerated(EnumType.STRING)
@@ -105,6 +112,23 @@ public class User {
         this.password = password;
         this.countryCode = countryCode;
         this.profileImageUrl = profileImageUrl;
+        this.role = role;
+        this.active = true;
+    }
+
+    public User(String email,
+                String username,
+                String password,
+                String countryCode,
+                String profileImageUrl,
+                String salutation,
+                Role role) {
+        this.email = email;
+        this.username = username;
+        this.password = password;
+        this.countryCode = countryCode;
+        this.profileImageUrl = profileImageUrl;
+        this.salutation = salutation;
         this.role = role;
         this.active = true;
     }
@@ -154,6 +178,14 @@ public class User {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getSalutation() {
+        return salutation;
+    }
+
+    public void setSalutation(String salutation) {
+        this.salutation = salutation;
     }
 
     public Role getRole() {

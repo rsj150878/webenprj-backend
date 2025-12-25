@@ -77,6 +77,7 @@ public class FollowService {
                 user.getUsername(),
                 user.getCountryCode(),
                 user.getProfileImageUrl(),
+                user.getSalutation(),
                 user.getRole().name(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),

@@ -58,6 +58,7 @@ public class AuthService {
                 user.getUsername(),
                 user.getCountryCode(),
                 user.getProfileImageUrl(),
+                user.getSalutation(),
                 user.getRole().name(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()

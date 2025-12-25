@@ -42,12 +42,19 @@ public class UserResponse {
     private final String countryCode;
     
     @Schema(
-        description = "Profile image URL (optional)", 
+        description = "Profile image URL (optional)",
         example = "https://example.com/images/profile1.png",
         nullable = true
     )
     private final String profileImageUrl;
-    
+
+    @Schema(
+        description = "Salutation or title (optional)",
+        example = "Dr.",
+        nullable = true
+    )
+    private final String salutation;
+
     @Schema(
         description = "User role determining access permissions", 
         example = "USER", 
@@ -95,18 +102,22 @@ public class UserResponse {
      * @param username Unique username
      * @param countryCode ISO country code
      * @param profileImageUrl Optional profile image URL
+     * @param salutation Optional salutation/title
      * @param role User role (USER or ADMIN)
      * @param createdAt Account creation timestamp
      * @param updatedAt Last update timestamp
+     * @param followerCount Number of followers
+     * @param followingCount Number of users being followed
      */
     public UserResponse(UUID id, String email, String username, String countryCode,
-                       String profileImageUrl, String role, LocalDateTime createdAt,
+                       String profileImageUrl, String salutation, String role, LocalDateTime createdAt,
                        LocalDateTime updatedAt, long followerCount, long followingCount) {
         this.id = id;
         this.email = email;
         this.username = username;
         this.countryCode = countryCode;
         this.profileImageUrl = profileImageUrl;
+        this.salutation = salutation;
         this.role = role;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -118,9 +129,9 @@ public class UserResponse {
      * Convenience constructor when follower/following counts are not available.
      */
     public UserResponse(UUID id, String email, String username, String countryCode,
-                        String profileImageUrl, String role, LocalDateTime createdAt,
+                        String profileImageUrl, String salutation, String role, LocalDateTime createdAt,
                         LocalDateTime updatedAt) {
-        this(id, email, username, countryCode, profileImageUrl, role, createdAt, updatedAt, 0, 0);
+        this(id, email, username, countryCode, profileImageUrl, salutation, role, createdAt, updatedAt, 0, 0);
     }
 
     // ===============================
@@ -143,8 +154,12 @@ public class UserResponse {
         return countryCode; 
     }
 
-    public String getProfileImageUrl() { 
-        return profileImageUrl; 
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public String getSalutation() {
+        return salutation;
     }
 
     public String getRole() { 
