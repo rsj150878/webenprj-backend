@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
+import at.fhtw.webenprjbackend.dto.ChangeEmailRequest;
 import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
+import at.fhtw.webenprjbackend.dto.ProfileUpdateResponse;
 import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
 import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
 import at.fhtw.webenprjbackend.dto.UserResponse;
@@ -20,6 +22,7 @@ import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.FollowRepository;
 import at.fhtw.webenprjbackend.repository.UserRepository;
 import at.fhtw.webenprjbackend.dto.AdminUserResponse;
+import at.fhtw.webenprjbackend.security.jwt.TokenIssuer;
 
 
 /**
@@ -32,16 +35,19 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FollowRepository followRepository;
+    private final TokenIssuer tokenIssuer;
     private final String defaultProfileImage;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        FollowRepository followRepository,
+                       TokenIssuer tokenIssuer,
                        @org.springframework.beans.factory.annotation.Value("${app.user.default-profile-image:https://example.com/default-profile.png}")
                        String defaultProfileImage) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.followRepository = followRepository;
+        this.tokenIssuer = tokenIssuer;
         this.defaultProfileImage = defaultProfileImage;
     }
 
@@ -91,11 +97,15 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateCurrentUserProfile(UUID userId, UserProfileUpdateRequest request) {
+    public ProfileUpdateResponse updateCurrentUserProfile(UUID userId, UserProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         validateUniqueEmailAndUsername(userId, request.getEmail(), request.getUsername());
+
+        // Check if credentials (email or username) are changing
+        boolean credentialsChanged = !user.getEmail().equals(request.getEmail())
+                || !user.getUsername().equals(request.getUsername());
 
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
@@ -107,7 +117,15 @@ public class UserService {
         }
 
         User saved = userRepository.save(user);
-        return toResponse(saved);
+        UserResponse userResponse = toResponse(saved);
+
+        // Issue new token if credentials changed
+        if (credentialsChanged) {
+            String newToken = tokenIssuer.issue(saved.getId(), saved.getUsername(), saved.getRole().name());
+            return new ProfileUpdateResponse(userResponse, newToken, true);
+        }
+
+        return new ProfileUpdateResponse(userResponse);
     }
 
     @Transactional
@@ -121,6 +139,48 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public ProfileUpdateResponse changeEmail(UUID userId, ChangeEmailRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // Verify current password
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect.");
+        }
+
+        // Check if email is already taken by another user
+        userRepository.findByEmail(request.getNewEmail())
+                .filter(other -> !other.getId().equals(userId))
+                .ifPresent(other -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use.");
+                });
+
+        // Update email
+        user.setEmail(request.getNewEmail());
+        User saved = userRepository.save(user);
+
+        UserResponse userResponse = toResponse(saved);
+
+        // Issue new token with updated info
+        String newToken = tokenIssuer.issue(saved.getId(), saved.getUsername(), saved.getRole().name());
+        return new ProfileUpdateResponse(userResponse, newToken, true);
+    }
+
+    /**
+     * Remove avatar for current user (reset to default placeholder)
+     */
+    @Transactional
+    public ProfileUpdateResponse removeAvatar(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setProfileImageUrl(defaultProfileImage);
+        User saved = userRepository.save(user);
+
+        return new ProfileUpdateResponse(toResponse(saved));
     }
 
     // ======================== Admin-Functions ========================
@@ -169,6 +229,20 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         user.setActive(active);
         User saved = userRepository.save(user);
+        return toAdminResponse(saved);
+    }
+
+    /**
+     * Admin: Remove avatar for any user (reset to default placeholder)
+     */
+    @Transactional
+    public AdminUserResponse adminRemoveAvatar(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setProfileImageUrl(defaultProfileImage);
+        User saved = userRepository.save(user);
+
         return toAdminResponse(saved);
     }
 
