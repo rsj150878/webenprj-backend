@@ -1,5 +1,7 @@
 package at.fhtw.webenprjbackend.dto;
 
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -26,7 +28,7 @@ public class PostCreateRequest {
     private String subject;
 
     @NotBlank(message = "Content is required")
-    @Size(min = 10, max = 500, message = "Content must be between 10 and 500 characters")
+    @Size(min = 5, max = 500, message = "Content must be between 5 and 500 characters")
     @Schema(
         description = "Main content describing the study progress or learning update", 
         example = "Just finished learning about Spring Boot dependency injection. The concept of IoC is really powerful!",
@@ -46,6 +48,13 @@ public class PostCreateRequest {
         nullable = true
     )
     private String imageUrl;
+
+    @Schema(
+        description = "Parent post ID when creating a comment. Leave null for top-level posts.",
+        example = "123e4567-e89b-12d3-a456-426614174000",
+        nullable = true
+    )
+    private UUID parentId;
 
     // Note: userId is extracted from JWT token in the controller, not sent in request body
 
@@ -108,6 +117,14 @@ public class PostCreateRequest {
         this.imageUrl = imageUrl;
     }
 
+    public UUID getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(UUID parentId) {
+        this.parentId = parentId;
+    }
+
     // ===============================
     // Utility Methods
     // ===============================
@@ -134,7 +151,7 @@ public class PostCreateRequest {
      * @return true if content has substantial text
      */
     public boolean hasValidContent() {
-        return content != null && content.trim().length() >= 10;
+        return content != null && content.trim().length() >= 5;
     }
 
     // ===============================

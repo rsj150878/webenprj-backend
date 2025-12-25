@@ -11,6 +11,21 @@ public record PostResponse(
                 requiredMode = Schema.RequiredMode.REQUIRED)
         UUID id,
 
+        @Schema(description = "Parent post ID if this is a comment, null for top-level posts",
+                example = "123e4567-e89b-12d3-a456-426614174000",
+                nullable = true)
+        UUID parentId,
+
+        @Schema(description = "Number of direct comments on this post",
+                example = "5",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        long commentCount,
+
+        @Schema(description = "Whether the parent post was deleted (for showing 'original post was deleted' message)",
+                example = "false",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean parentDeleted,
+
         @Schema(description = "Post subject/topic (hashtag-style supported)", example = "#JavaLearning",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         String subject,
