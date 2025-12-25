@@ -309,12 +309,15 @@ public class BookmarkService {
     }
 
     /**
-     * Create a minimal PostResponse without fetching like/bookmark counts
+     * Create a minimal PostResponse without fetching like/bookmark/comment counts
      * This is used in BookmarkResponse to avoid circular dependencies
      */
     private at.fhtw.webenprjbackend.dto.PostResponse createMinimalPostResponse(Post post) {
         return new at.fhtw.webenprjbackend.dto.PostResponse(
             post.getId(),
+            post.getParent() != null ? post.getParent().getId() : null, // parentId
+            0L, // commentCount - not fetched in bookmark context
+            post.getParent() != null && !post.getParent().isActive(), // parentDeleted
             "#" + post.getSubject(),
             post.getContent(),
             post.getImageUrl(),
