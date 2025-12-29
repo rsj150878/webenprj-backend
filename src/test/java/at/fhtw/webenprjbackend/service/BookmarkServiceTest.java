@@ -104,9 +104,11 @@ class BookmarkServiceTest {
                 return bookmark;
             });
 
-            BookmarkResponse result = bookmarkService.createBookmark(postId, userId, request);
+            BookmarkCreateResult result = bookmarkService.createBookmark(postId, userId, request);
 
             assertThat(result).isNotNull();
+            assertThat(result.created()).isTrue();
+            assertThat(result.bookmark()).isNotNull();
             verify(bookmarkRepository).save(any(PostBookmark.class));
         }
 
@@ -122,9 +124,11 @@ class BookmarkServiceTest {
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
             when(bookmarkRepository.findByUserAndPost(testUser, testPost)).thenReturn(Optional.of(existingBookmark));
 
-            BookmarkResponse result = bookmarkService.createBookmark(postId, userId, request);
+            BookmarkCreateResult result = bookmarkService.createBookmark(postId, userId, request);
 
             assertThat(result).isNotNull();
+            assertThat(result.created()).isFalse();
+            assertThat(result.bookmark()).isNotNull();
             verify(bookmarkRepository, never()).save(any());
         }
 

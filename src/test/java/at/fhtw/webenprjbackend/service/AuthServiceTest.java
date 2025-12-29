@@ -114,9 +114,9 @@ class AuthServiceTest {
             assertThat(response).isNotNull();
             assertThat(response.getToken()).isEqualTo(expectedToken);
             assertThat(response.getUser()).isNotNull();
-            assertThat(response.getUser().getEmail()).isEqualTo("test@example.com");
-            assertThat(response.getUser().getUsername()).isEqualTo("testuser");
-            assertThat(response.getUser().getRole()).isEqualTo("USER");
+            assertThat(response.getUser().email()).isEqualTo("test@example.com");
+            assertThat(response.getUser().username()).isEqualTo("testuser");
+            assertThat(response.getUser().role()).isEqualTo("USER");
 
             verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
             verify(tokenIssuer).issue(testUserId, "testuser", "ROLE_USER");
@@ -148,7 +148,7 @@ class AuthServiceTest {
             // Assert
             assertThat(response).isNotNull();
             assertThat(response.getToken()).isEqualTo(expectedToken);
-            assertThat(response.getUser().getUsername()).isEqualTo("testuser");
+            assertThat(response.getUser().username()).isEqualTo("testuser");
         }
 
         @Test
@@ -222,7 +222,7 @@ class AuthServiceTest {
             LoginResponse response = authService.login(request);
 
             // Assert
-            assertThat(response.getUser().getRole()).isEqualTo("ADMIN");
+            assertThat(response.getUser().role()).isEqualTo("ADMIN");
             verify(tokenIssuer).issue(testUserId, "testuser", "ROLE_ADMIN");
         }
     }

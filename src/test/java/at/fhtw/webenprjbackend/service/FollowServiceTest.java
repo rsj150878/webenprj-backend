@@ -188,7 +188,7 @@ class FollowServiceTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getUsername()).isEqualTo("follower");
+            assertThat(result.getContent().get(0).username()).isEqualTo("follower");
         }
 
         @Test
@@ -223,7 +223,7 @@ class FollowServiceTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getUsername()).isEqualTo("followed");
+            assertThat(result.getContent().get(0).username()).isEqualTo("followed");
         }
     }
 

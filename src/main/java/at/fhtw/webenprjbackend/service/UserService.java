@@ -40,6 +40,7 @@ public class UserService {
     private final TokenIssuer tokenIssuer;
     private final String defaultProfileImage;
 
+    /** Constructor with DI. */
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        FollowRepository followRepository,

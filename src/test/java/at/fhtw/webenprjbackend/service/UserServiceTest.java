@@ -115,9 +115,9 @@ class UserServiceTest {
 
             // Assert
             assertThat(result).isNotNull();
-            assertThat(result.getEmail()).isEqualTo("newuser@example.com");
-            assertThat(result.getUsername()).isEqualTo("newuser");
-            assertThat(result.getRole()).isEqualTo("USER");
+            assertThat(result.email()).isEqualTo("newuser@example.com");
+            assertThat(result.username()).isEqualTo("newuser");
+            assertThat(result.role()).isEqualTo("USER");
 
             verify(passwordEncoder).encode("Password123!");
             verify(userRepository).save(any(User.class));
@@ -209,10 +209,10 @@ class UserServiceTest {
 
             // Assert
             assertThat(result).isNotNull();
-            assertThat(result.getUsername()).isEqualTo("testuser");
-            assertThat(result.getEmail()).isEqualTo("test@example.com");
-            assertThat(result.getFollowerCount()).isEqualTo(10L);
-            assertThat(result.getFollowingCount()).isEqualTo(5L);
+            assertThat(result.username()).isEqualTo("testuser");
+            assertThat(result.email()).isEqualTo("test@example.com");
+            assertThat(result.followerCount()).isEqualTo(10L);
+            assertThat(result.followingCount()).isEqualTo(5L);
         }
 
         @Test

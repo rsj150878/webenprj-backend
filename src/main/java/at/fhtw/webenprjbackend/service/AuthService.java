@@ -56,7 +56,7 @@ public class AuthService {
                         new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found for token")
                 );
 
-        UserResponse userResponse = new UserResponse(
+        UserResponse userResponse = UserResponse.withoutCounts(
                 user.getId(),
                 user.getEmail(),
                 user.getUsername(),

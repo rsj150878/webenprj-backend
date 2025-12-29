@@ -39,6 +39,7 @@ public class PostService {
     private final FollowRepository followRepository;
     private final BookmarkService bookmarkService;
 
+    /** Constructor with DI. */
     public PostService(PostRepository postRepository, UserRepository userRepository,
                        PostLikeRepository postLikeRepository, FollowRepository followRepository,
                        BookmarkService bookmarkService) {

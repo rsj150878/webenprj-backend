@@ -58,8 +58,8 @@ public class LoginResponse {
      * @return true if both token and user are present and valid
      */
     public boolean isValid() {
-        return token != null && !token.trim().isEmpty() && 
-               user != null && user.getId() != null;
+        return token != null && !token.trim().isEmpty() &&
+               user != null && user.id() != null;
     }
 
     /**
@@ -67,7 +67,7 @@ public class LoginResponse {
      * @return user role as string, or null if user data is missing
      */
     public String getUserRole() {
-        return user != null ? user.getRole() : null;
+        return user != null ? user.role() : null;
     }
 
     /**
@@ -75,7 +75,7 @@ public class LoginResponse {
      * @return user ID, or null if user data is missing
      */
     public java.util.UUID getUserId() {
-        return user != null ? user.getId() : null;
+        return user != null ? user.id() : null;
     }
 
     // ===============================
