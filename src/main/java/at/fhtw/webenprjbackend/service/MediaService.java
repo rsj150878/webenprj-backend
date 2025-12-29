@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 import at.fhtw.webenprjbackend.entity.Media;
 import at.fhtw.webenprjbackend.filestorage.FileStorage;
 import at.fhtw.webenprjbackend.repository.MediaRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.server.ResponseStatusException;
 

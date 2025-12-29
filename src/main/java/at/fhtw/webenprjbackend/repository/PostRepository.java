@@ -1,5 +1,6 @@
 package at.fhtw.webenprjbackend.repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -81,5 +82,18 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            "WHERE p.parent.id IN :parentIds AND p.active = true " +
            "GROUP BY p.parent.id")
     List<Object[]> countCommentsByParentIds(@Param("parentIds") Collection<UUID> parentIds);
+
+    // ========== User activity checks ==========
+
+    /**
+     * Check if user has posted (top-level, active) since a given time.
+     */
+    boolean existsByUserIdAndParentIsNullAndActiveTrueAndCreatedAtGreaterThanEqual(
+            UUID userId, LocalDateTime since);
+
+    /**
+     * Get all active posts and comments by a user, ordered by creation time desc.
+     */
+    Page<Post> findByUserIdAndActiveTrueOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
 }

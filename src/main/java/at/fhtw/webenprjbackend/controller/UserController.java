@@ -3,13 +3,14 @@ package at.fhtw.webenprjbackend.controller;
 import java.util.UUID;
 
 import at.fhtw.webenprjbackend.dto.AdminUserResponse;
+import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
 import at.fhtw.webenprjbackend.dto.ChangeEmailRequest;
 import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
+import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.ProfileUpdateResponse;
 import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
 import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
 import at.fhtw.webenprjbackend.dto.UserResponse;
-import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import at.fhtw.webenprjbackend.security.UserPrincipal;
+import at.fhtw.webenprjbackend.service.PostService;
 import at.fhtw.webenprjbackend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,13 +67,16 @@ public class UserController {
     private static final String MEDIA_TYPE_JSON = "application/json";
 
     private final UserService userService;
+    private final PostService postService;
 
     /**
      * Constructor for dependency injection
      * @param userService Service layer for user operations
+     * @param postService Service layer for post operations
      */
-    public UserController(UserService userService) {
+    public UserController(UserService userService, PostService postService) {
         this.userService = userService;
+        this.postService = postService;
     }
 
     // ===============================
@@ -154,6 +159,35 @@ public class UserController {
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return ResponseEntity.ok(userService.getCurrentUser(principal.getId()));
+    }
+
+    @GetMapping("/me/activity")
+    @Operation(
+        summary = "Get user activity status",
+        description = "Get activity status for the currently authenticated user, including whether they've posted today.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "User activity status")
+    public ResponseEntity<java.util.Map<String, Object>> getActivityStatus(Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        boolean hasPostedToday = postService.hasUserPostedToday(principal.getId());
+        return ResponseEntity.ok(java.util.Map.of("hasPostedToday", hasPostedToday));
+    }
+
+    @GetMapping("/me/posts")
+    @Operation(
+        summary = "Get current user's posts and comments",
+        description = "Get all posts and comments by the currently authenticated user, ordered by most recent first.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "User's posts and comments")
+    public ResponseEntity<Page<PostResponse>> getMyPosts(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "10") @Positive @Max(50) int size) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(postService.getUserActivity(principal.getId(), pageable, principal.getId()));
     }
 
     @PutMapping("/me")

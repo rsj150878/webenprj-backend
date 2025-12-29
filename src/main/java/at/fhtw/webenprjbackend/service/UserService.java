@@ -45,7 +45,7 @@ public class UserService {
                        PasswordEncoder passwordEncoder,
                        FollowRepository followRepository,
                        TokenIssuer tokenIssuer,
-                       @org.springframework.beans.factory.annotation.Value("${app.user.default-profile-image:https://example.com/default-profile.png}")
+                       @org.springframework.beans.factory.annotation.Value("${app.user.default-profile-image:/avatar-placeholder.svg}")
                        String defaultProfileImage) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;

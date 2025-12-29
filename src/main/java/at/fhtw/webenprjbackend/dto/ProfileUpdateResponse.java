@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Response after updating user profile, includes new token if credentials changed")
 public class ProfileUpdateResponse {
 
-    @Schema(description = "Updated user information", required = true)
+    @Schema(description = "Updated user information", requiredMode = Schema.RequiredMode.REQUIRED)
     private final UserResponse user;
 
     @Schema(

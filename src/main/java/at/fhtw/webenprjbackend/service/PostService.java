@@ -1,5 +1,7 @@
 package at.fhtw.webenprjbackend.service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -99,6 +101,11 @@ public class PostService {
         if (request.getParentId() != null) {
             Post parent = postRepository.findById(request.getParentId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent post not found"));
+            // Only allow comments on top-level posts (not on other comments)
+            if (parent.getParent() != null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Cannot reply to a comment. Comments must be on the original post.");
+            }
             if (!parent.isActive()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot comment on a deleted post");
             }
@@ -285,5 +292,22 @@ public class PostService {
                         row -> (UUID) row[0],
                         row -> (Long) row[1]
                 ));
+    }
+
+    /**
+     * Check if user has posted today (top-level posts only).
+     */
+    public boolean hasUserPostedToday(UUID userId) {
+        var startOfToday = LocalDate.now().atTime(LocalTime.MIN);
+        return postRepository.existsByUserIdAndParentIsNullAndActiveTrueAndCreatedAtGreaterThanEqual(
+                userId, startOfToday);
+    }
+
+    /**
+     * Get all activity (posts + comments) by a user.
+     */
+    public Page<PostResponse> getUserActivity(UUID userId, Pageable pageable, UUID currentUserId) {
+        Page<Post> posts = postRepository.findByUserIdAndActiveTrueOrderByCreatedAtDesc(userId, pageable);
+        return mapPageWithLikes(posts, currentUserId);
     }
 }

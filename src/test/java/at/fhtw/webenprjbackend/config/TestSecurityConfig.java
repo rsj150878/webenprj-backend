@@ -1,12 +1,9 @@
 package at.fhtw.webenprjbackend.config;
 
-import at.fhtw.webenprjbackend.security.SecurityConfiguration;
 import at.fhtw.webenprjbackend.security.permission.AccessPermission;
 import at.fhtw.webenprjbackend.security.permission.AccessPermissionEvaluator;
-import at.fhtw.webenprjbackend.security.permission.PermissionConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.access.PermissionEvaluator;
