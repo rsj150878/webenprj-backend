@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import at.fhtw.webenprjbackend.controller.PostController;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
@@ -29,7 +28,6 @@ import at.fhtw.webenprjbackend.repository.UserRepository;
  *
  * @see Post
  * @see PostRepository
- * @see PostController
  */
 @Service
 @Transactional(readOnly = true)

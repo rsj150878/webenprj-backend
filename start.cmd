@@ -60,6 +60,11 @@ echo.
 echo Clearing any previous Spring profile settings...
 set SPRING_PROFILES_ACTIVE=
 
+REM Set JWT secret for development (generate your own for production!)
+if not defined JWT_SECRET_KEY (
+    set JWT_SECRET_KEY=dev-only-jwt-secret-key-min-32-chars-do-not-use-in-prod
+)
+
 call mvnw.cmd spring-boot:run -DskipTests
 goto :end
 
