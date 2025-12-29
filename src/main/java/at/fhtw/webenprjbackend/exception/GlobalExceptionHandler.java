@@ -3,12 +3,18 @@ package at.fhtw.webenprjbackend.exception;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+
+import io.jsonwebtoken.JwtException;
+import at.fhtw.webenprjbackend.security.ratelimit.RateLimitException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -84,6 +90,31 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles constraint violations from Bean Validation (@Size, @Email, etc.).
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex,
+            WebRequest request) {
+
+        log.info("Constraint violation at {}", getPath(request));
+
+        String message = ex.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                .collect(Collectors.joining(", "));
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Validation Failed")
+                .message(message)
+                .path(getPath(request))
+                .build();
+
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    /**
      * Handles authorization failures.
      */
     @ExceptionHandler(AccessDeniedException.class)
@@ -127,6 +158,52 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    /**
+     * Handles JWT-related exceptions (invalid, expired, malformed tokens).
+     */
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException(
+            JwtException ex,
+            WebRequest request) {
+
+        log.warn("JWT error at {}: {}", getPath(request), ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Unauthorized")
+                .message("Invalid or expired token")
+                .path(getPath(request))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    /**
+     * Handles rate limit exceeded exceptions.
+     */
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitException(
+            RateLimitException ex,
+            WebRequest request) {
+
+        log.warn("Rate limit exceeded at {}", getPath(request));
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.TOO_MANY_REQUESTS.value())
+                .error("Too Many Requests")
+                .message("Too many login attempts. Please try again in "
+                        + ex.getRetryAfterSeconds() + " seconds.")
+                .path(getPath(request))
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(error);
     }
 
     /**

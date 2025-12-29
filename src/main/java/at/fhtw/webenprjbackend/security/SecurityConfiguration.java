@@ -25,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import at.fhtw.webenprjbackend.security.jwt.JwtAuthenticationFilter;
 import at.fhtw.webenprjbackend.security.jwt.JwtDecoder;
+import at.fhtw.webenprjbackend.security.ratelimit.RateLimitingFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -56,7 +57,8 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           JwtAuthenticationFilter jwtFilter) throws Exception {
+                                           JwtAuthenticationFilter jwtFilter,
+                                           RateLimitingFilter rateLimitingFilter) throws Exception {
 
         boolean isDevelopmentMode = isDevelopmentProfile();
 
@@ -84,6 +86,8 @@ public class SecurityConfiguration {
         // Security Headers Configuration
         configureSecurityHeaders(http, isDevelopmentMode);
 
+        // Add rate limiting filter first (before JWT auth)
+        http.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

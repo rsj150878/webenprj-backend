@@ -37,7 +37,8 @@ public class MediaService {
 
     public Media findById(UUID id) {
         return mediaRepository.findById(id)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Media not found with id: " + id));
     }
 
     public Resource asResource(Media cover) {

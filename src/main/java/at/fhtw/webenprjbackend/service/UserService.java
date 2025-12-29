@@ -1,5 +1,7 @@
 package at.fhtw.webenprjbackend.service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -79,8 +81,8 @@ public class UserService {
 
     // ======================== General Methods ========================
     public Page<UserResponse> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable)
-                .map(this::toResponse);
+        Page<User> userPage = userRepository.findAll(pageable);
+        return toResponsePage(userPage);
     }
 
     public UserResponse getUserById(UUID id) {
@@ -257,6 +259,40 @@ public class UserService {
     }
 
     // ======================== Helper ========================
+
+    /**
+     * Converts a page of users to UserResponse with batch-loaded follow counts.
+     * This avoids N+1 queries when fetching paginated user lists.
+     */
+    private Page<UserResponse> toResponsePage(Page<User> userPage) {
+        List<User> users = userPage.getContent();
+        if (users.isEmpty()) {
+            return userPage.map(this::toResponse);
+        }
+
+        // Batch fetch follow counts (2 queries instead of 2*N)
+        List<UUID> userIds = users.stream().map(User::getId).toList();
+        Map<UUID, Long> followerCounts = followRepository.getFollowerCountsMap(userIds);
+        Map<UUID, Long> followingCounts = followRepository.getFollowingCountsMap(userIds);
+
+        return userPage.map(user -> new UserResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getCountryCode(),
+                user.getProfileImageUrl(),
+                user.getSalutation(),
+                user.getRole().name(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                followerCounts.getOrDefault(user.getId(), 0L),
+                followingCounts.getOrDefault(user.getId(), 0L)
+        ));
+    }
+
+    /**
+     * Converts a single user to UserResponse (used for single-user lookups).
+     */
     private UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
