@@ -71,8 +71,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> {
                     auth
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll();
-                        
+                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/count").permitAll();
+
                     if (isDevelopmentMode) {
                         auth
                             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()

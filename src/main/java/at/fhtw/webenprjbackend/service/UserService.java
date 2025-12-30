@@ -86,6 +86,14 @@ public class UserService {
         return toResponsePage(userPage);
     }
 
+    /**
+     * Get total count of registered users.
+     * Used for public display on login page.
+     */
+    public long getUserCount() {
+        return userRepository.count();
+    }
+
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));

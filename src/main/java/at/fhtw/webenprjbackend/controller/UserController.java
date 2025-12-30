@@ -125,6 +125,24 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @GetMapping("/count")
+    @Operation(
+        summary = "Get total user count",
+        description = "Returns the total number of registered users. Public endpoint for displaying community size on login page."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "User count retrieved successfully",
+        content = @Content(
+            mediaType = MEDIA_TYPE_JSON,
+            examples = @ExampleObject(value = "{\"count\": 42}")
+        )
+    )
+    public ResponseEntity<java.util.Map<String, Long>> getUserCount() {
+        long count = userService.getUserCount();
+        return ResponseEntity.ok(java.util.Map.of("count", count));
+    }
+
     // ===============================
     // Self-Service Endpoints - Profile Management
     // ===============================
