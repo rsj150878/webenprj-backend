@@ -15,10 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.BookmarkCollectionResponse;
-import at.fhtw.webenprjbackend.dto.BookmarkCreateRequest;
 import at.fhtw.webenprjbackend.dto.BookmarkCreateResult;
+import at.fhtw.webenprjbackend.dto.BookmarkRequest;
 import at.fhtw.webenprjbackend.dto.BookmarkResponse;
-import at.fhtw.webenprjbackend.dto.BookmarkUpdateRequest;
 import at.fhtw.webenprjbackend.dto.CollectionCreateRequest;
 import at.fhtw.webenprjbackend.entity.BookmarkCollection;
 import at.fhtw.webenprjbackend.entity.Post;
@@ -60,7 +59,7 @@ public class BookmarkService {
 
     /** Create a bookmark (idempotent - returns existing if duplicate) */
     @Transactional
-    public BookmarkCreateResult createBookmark(UUID postId, UUID userId, BookmarkCreateRequest request) {
+    public BookmarkCreateResult createBookmark(UUID postId, UUID userId, BookmarkRequest request) {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
         User user = userRepository.findById(userId)
@@ -105,7 +104,7 @@ public class BookmarkService {
      * Update bookmark metadata (move to collection, update notes)
      */
     @Transactional
-    public BookmarkResponse updateBookmark(UUID postId, UUID userId, BookmarkUpdateRequest request) {
+    public BookmarkResponse updateBookmark(UUID postId, UUID userId, BookmarkRequest request) {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
         User user = userRepository.findById(userId)

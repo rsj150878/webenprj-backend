@@ -4,8 +4,7 @@ import java.util.UUID;
 
 import at.fhtw.webenprjbackend.dto.AdminUserResponse;
 import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
-import at.fhtw.webenprjbackend.dto.ChangeEmailRequest;
-import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
+import at.fhtw.webenprjbackend.dto.CredentialChangeRequests;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.ProfileUpdateResponse;
 import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
@@ -284,7 +283,7 @@ public class UserController {
         )
     })
     public ResponseEntity<Void> changePassword(
-            @Valid @RequestBody ChangePasswordRequest request,
+            @Valid @RequestBody CredentialChangeRequests.PasswordChange request,
             Authentication authentication) {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
@@ -335,7 +334,7 @@ public class UserController {
         )
     })
     public ResponseEntity<ProfileUpdateResponse> changeEmail(
-            @Valid @RequestBody ChangeEmailRequest request,
+            @Valid @RequestBody CredentialChangeRequests.EmailChange request,
             Authentication authentication) {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();

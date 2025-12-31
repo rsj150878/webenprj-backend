@@ -13,8 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
-import at.fhtw.webenprjbackend.dto.ChangeEmailRequest;
-import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
+import at.fhtw.webenprjbackend.dto.CredentialChangeRequests;
 import at.fhtw.webenprjbackend.dto.ProfileUpdateResponse;
 import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
 import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
@@ -140,7 +139,7 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(UUID userId, ChangePasswordRequest request) {
+    public void changePassword(UUID userId, CredentialChangeRequests.PasswordChange request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -153,7 +152,7 @@ public class UserService {
     }
 
     @Transactional
-    public ProfileUpdateResponse changeEmail(UUID userId, ChangeEmailRequest request) {
+    public ProfileUpdateResponse changeEmail(UUID userId, CredentialChangeRequests.EmailChange request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 

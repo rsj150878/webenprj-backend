@@ -1,6 +1,6 @@
 package at.fhtw.webenprjbackend.service;
 
-import at.fhtw.webenprjbackend.dto.ChangePasswordRequest;
+import at.fhtw.webenprjbackend.dto.CredentialChangeRequests;
 import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
 import at.fhtw.webenprjbackend.dto.UserResponse;
 import at.fhtw.webenprjbackend.entity.Role;
@@ -237,7 +237,7 @@ class UserServiceTest {
         @DisplayName("should change password successfully")
         void changePassword_success() {
             // Arrange
-            ChangePasswordRequest request = new ChangePasswordRequest("oldPassword", "newPassword123!");
+            CredentialChangeRequests.PasswordChange request = new CredentialChangeRequests.PasswordChange("oldPassword", "newPassword123!");
 
             when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
             when(passwordEncoder.matches("oldPassword", "hashedPassword")).thenReturn(true);
@@ -258,7 +258,7 @@ class UserServiceTest {
         @DisplayName("should throw exception when current password is incorrect")
         void changePassword_wrongCurrentPassword_throwsException() {
             // Arrange
-            ChangePasswordRequest request = new ChangePasswordRequest("wrongPassword", "newPassword123!");
+            CredentialChangeRequests.PasswordChange request = new CredentialChangeRequests.PasswordChange("wrongPassword", "newPassword123!");
 
             when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
             when(passwordEncoder.matches("wrongPassword", "hashedPassword")).thenReturn(false);
@@ -276,7 +276,7 @@ class UserServiceTest {
         void changePassword_userNotFound_throwsException() {
             // Arrange
             UUID nonExistentId = UUID.randomUUID();
-            ChangePasswordRequest request = new ChangePasswordRequest("password", "newPassword123!");
+            CredentialChangeRequests.PasswordChange request = new CredentialChangeRequests.PasswordChange("password", "newPassword123!");
 
             when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 

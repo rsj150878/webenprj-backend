@@ -92,7 +92,7 @@ class BookmarkServiceTest {
         @Test
         @DisplayName("should create bookmark successfully")
         void createBookmark_success() {
-            BookmarkCreateRequest request = new BookmarkCreateRequest(null, "My notes");
+            BookmarkRequest request = new BookmarkRequest(null, "My notes");
 
             when(postRepository.findById(postId)).thenReturn(Optional.of(testPost));
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
@@ -115,7 +115,7 @@ class BookmarkServiceTest {
         @Test
         @DisplayName("should return existing bookmark if already bookmarked (idempotent)")
         void createBookmark_alreadyExists_returnsExisting() {
-            BookmarkCreateRequest request = new BookmarkCreateRequest(null, "My notes");
+            BookmarkRequest request = new BookmarkRequest(null, "My notes");
             PostBookmark existingBookmark = new PostBookmark(testUser, testPost, null, "Old notes");
             setField(existingBookmark, "id", UUID.randomUUID());
             setField(existingBookmark, "createdAt", LocalDateTime.now());
@@ -135,7 +135,7 @@ class BookmarkServiceTest {
         @Test
         @DisplayName("should throw exception when post not found")
         void createBookmark_postNotFound_throwsException() {
-            BookmarkCreateRequest request = new BookmarkCreateRequest(null, "My notes");
+            BookmarkRequest request = new BookmarkRequest(null, "My notes");
             when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> bookmarkService.createBookmark(postId, userId, request))
@@ -146,7 +146,7 @@ class BookmarkServiceTest {
         @Test
         @DisplayName("should throw exception when user not found")
         void createBookmark_userNotFound_throwsException() {
-            BookmarkCreateRequest request = new BookmarkCreateRequest(null, "My notes");
+            BookmarkRequest request = new BookmarkRequest(null, "My notes");
             when(postRepository.findById(postId)).thenReturn(Optional.of(testPost));
             when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
@@ -159,7 +159,7 @@ class BookmarkServiceTest {
         @DisplayName("should throw exception when collection not found")
         void createBookmark_collectionNotFound_throwsException() {
             UUID collectionId = UUID.randomUUID();
-            BookmarkCreateRequest request = new BookmarkCreateRequest(collectionId, "My notes");
+            BookmarkRequest request = new BookmarkRequest(collectionId, "My notes");
 
             when(postRepository.findById(postId)).thenReturn(Optional.of(testPost));
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
@@ -178,7 +178,7 @@ class BookmarkServiceTest {
             User otherUser = createTestUser(UUID.randomUUID(), "other", "other@example.com");
             BookmarkCollection collection = new BookmarkCollection(otherUser, "Other's Collection", null, null, null);
             setField(collection, "id", collectionId);
-            BookmarkCreateRequest request = new BookmarkCreateRequest(collectionId, "My notes");
+            BookmarkRequest request = new BookmarkRequest(collectionId, "My notes");
 
             when(postRepository.findById(postId)).thenReturn(Optional.of(testPost));
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
@@ -214,7 +214,7 @@ class BookmarkServiceTest {
         @Test
         @DisplayName("should update bookmark successfully")
         void updateBookmark_success() {
-            BookmarkUpdateRequest request = new BookmarkUpdateRequest(null, "Updated notes");
+            BookmarkRequest request = new BookmarkRequest(null, "Updated notes");
             PostBookmark bookmark = new PostBookmark(testUser, testPost, null, "Old notes");
             setField(bookmark, "id", UUID.randomUUID());
             setField(bookmark, "createdAt", LocalDateTime.now());
@@ -233,7 +233,7 @@ class BookmarkServiceTest {
         @Test
         @DisplayName("should throw exception when bookmark not found")
         void updateBookmark_notFound_throwsException() {
-            BookmarkUpdateRequest request = new BookmarkUpdateRequest(null, "Updated notes");
+            BookmarkRequest request = new BookmarkRequest(null, "Updated notes");
 
             when(postRepository.findById(postId)).thenReturn(Optional.of(testPost));
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
