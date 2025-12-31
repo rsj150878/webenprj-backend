@@ -1,8 +1,12 @@
 package at.fhtw.webenprjbackend.security.ratelimit;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -48,7 +52,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         });
 
         if (entry.getAttempts() > MAX_ATTEMPTS) {
-            throw new RateLimitException(entry.getSecondsUntilReset());
+            sendRateLimitResponse(response, entry.getSecondsUntilReset(), request.getRequestURI());
+            return;
         }
 
         filterChain.doFilter(request, response);
@@ -68,5 +73,25 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    private void sendRateLimitResponse(HttpServletResponse response, int retryAfterSeconds, String path) throws IOException {
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String jsonBody = String.format(
+                "{\"timestamp\":\"%s\",\"status\":429,\"error\":\"Too Many Requests\",\"message\":\"Too many login attempts. Please try again in %d seconds.\",\"path\":\"%s\"}",
+                timestamp, retryAfterSeconds, path
+        );
+        response.getWriter().write(jsonBody);
+    }
+
+    /**
+     * Clears all rate limit entries. Used for testing purposes.
+     */
+    public void clearAttempts() {
+        attempts.clear();
     }
 }
