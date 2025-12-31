@@ -191,6 +191,24 @@ public class PostService {
     }
 
     /**
+     * Get posts by a specific author (top-level posts only).
+     */
+    public Page<PostResponse> getPostsByAuthor(UUID authorId, Pageable pageable, UUID currentUserId) {
+        Page<Post> posts = postRepository.findByParentIsNullAndActiveTrueAndUserIdOrderByCreatedAtDesc(authorId, pageable);
+        return mapPageWithLikes(posts, currentUserId);
+    }
+
+    /**
+     * Get all unique subjects/tags used in posts.
+     * Returns subjects with '#' prefix for frontend display.
+     */
+    public List<String> getAvailableSubjects() {
+        return postRepository.findDistinctSubjects().stream()
+                .map(s -> "#" + s)
+                .toList();
+    }
+
+    /**
      * Normalizes subject by removing leading '#' if present.
      *
      * @param subject the subject to normalize (may or may not start with '#')

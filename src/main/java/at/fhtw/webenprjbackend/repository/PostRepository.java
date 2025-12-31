@@ -96,4 +96,15 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
      */
     Page<Post> findByUserIdAndActiveTrueOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
+    /**
+     * Get active top-level posts by a specific author.
+     */
+    Page<Post> findByParentIsNullAndActiveTrueAndUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+
+    /**
+     * Get all distinct subjects/tags used in active top-level posts.
+     */
+    @Query("SELECT DISTINCT p.subject FROM Post p WHERE p.parent IS NULL AND p.active = true ORDER BY p.subject")
+    List<String> findDistinctSubjects();
+
 }
