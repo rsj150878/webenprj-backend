@@ -69,6 +69,9 @@ public class SecurityConfiguration {
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> {
+                    // Allow CORS preflight requests
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+
                     auth
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
