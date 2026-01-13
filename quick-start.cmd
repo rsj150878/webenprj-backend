@@ -38,6 +38,12 @@ echo.
 echo TIP: Run 'quick-start.cmd info' to see URLs
 echo.
 set SPRING_PROFILES_ACTIVE=docker-free
+
+REM Set JWT secret for development (generate your own for production!)
+if not defined JWT_SECRET_KEY (
+    set JWT_SECRET_KEY=dev-only-jwt-secret-key-min-32-chars-do-not-use-in-prod
+)
+
 call mvnw.cmd spring-boot:run -Pdocker-free -DskipTests
 goto :end
 

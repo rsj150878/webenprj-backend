@@ -17,10 +17,10 @@ import org.springframework.web.multipart.MultipartFile;
 import at.fhtw.webenprjbackend.filestorage.FileStorage;
 
 /**
- * Mock file storage configuration for docker-free development
+ * Mock file storage configuration for docker-free development and testing
  */
 @Configuration
-@Profile("docker-free")
+@Profile({"docker-free", "test"})
 public class MockFileStorageConfig {
 
     /**

@@ -11,7 +11,7 @@ import io.minio.MinioClient;
 import jakarta.annotation.PostConstruct;
 
 @Component
-@Profile("!docker-free") // Exclude from docker-free profile
+@Profile("!docker-free & !test") // Exclude from docker-free and test profiles
 public class MinioInitializer {
 
     Logger log = LoggerFactory.getLogger(MinioInitializer.class);

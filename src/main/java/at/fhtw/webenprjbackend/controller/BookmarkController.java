@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import at.fhtw.webenprjbackend.dto.BookmarkCollectionResponse;
-import at.fhtw.webenprjbackend.dto.BookmarkCreateRequest;
+import at.fhtw.webenprjbackend.dto.BookmarkCreateResult;
+import at.fhtw.webenprjbackend.dto.BookmarkRequest;
 import at.fhtw.webenprjbackend.dto.BookmarkResponse;
-import at.fhtw.webenprjbackend.dto.BookmarkUpdateRequest;
 import at.fhtw.webenprjbackend.dto.CollectionCreateRequest;
 import at.fhtw.webenprjbackend.security.UserPrincipal;
 import at.fhtw.webenprjbackend.service.BookmarkService;
@@ -70,7 +70,15 @@ public class BookmarkController {
     @ApiResponses({
         @ApiResponse(
             responseCode = "201",
-            description = "Bookmark created (or existing bookmark returned)",
+            description = "Bookmark created",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                schema = @Schema(implementation = BookmarkResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "200",
+            description = "Bookmark already exists (idempotent)",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
                 schema = @Schema(implementation = BookmarkResponse.class)
@@ -82,13 +90,14 @@ public class BookmarkController {
     public ResponseEntity<BookmarkResponse> createBookmark(
             @Parameter(description = "Post UUID to bookmark", required = true)
             @PathVariable UUID postId,
-            @Valid @RequestBody(required = false) BookmarkCreateRequest request,
+            @Valid @RequestBody(required = false) BookmarkRequest request,
             Authentication authentication) {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        BookmarkCreateRequest actualRequest = request != null ? request : new BookmarkCreateRequest(null, null);
-        BookmarkResponse bookmark = bookmarkService.createBookmark(postId, principal.getId(), actualRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(bookmark);
+        BookmarkRequest actualRequest = request != null ? request : new BookmarkRequest(null, null);
+        BookmarkCreateResult result = bookmarkService.createBookmark(postId, principal.getId(), actualRequest);
+        HttpStatus status = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
+        return ResponseEntity.status(status).body(result.bookmark());
     }
 
     @DeleteMapping("/posts/{postId}")
@@ -134,7 +143,7 @@ public class BookmarkController {
     public ResponseEntity<BookmarkResponse> updateBookmark(
             @Parameter(description = "Post UUID", required = true)
             @PathVariable UUID postId,
-            @Valid @RequestBody BookmarkUpdateRequest request,
+            @Valid @RequestBody BookmarkRequest request,
             Authentication authentication) {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();

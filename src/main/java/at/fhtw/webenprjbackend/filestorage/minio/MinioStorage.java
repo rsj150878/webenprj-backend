@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Profile("!docker-free") // Exclude from docker-free profile - use MockFileStorage instead
+@Profile("!docker-free & !test") // Exclude from docker-free and test profiles - use MockFileStorage instead
 public class MinioStorage implements FileStorage {
 
     private final MinioClient minioClient;

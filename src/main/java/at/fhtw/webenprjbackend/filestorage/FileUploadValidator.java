@@ -30,13 +30,6 @@ public class FileUploadValidator {
     // Maximum file size: 10 MB
     private static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
-    // Explicitly blocked extensions
-    private static final Set<String> BLOCKED_EXTENSIONS = Set.of(
-            "exe", "bat", "sh", "cmd", "jar", "war",  // executables
-            "js", "jsp", "php", "asp", "aspx",        // scripts
-            "sql", "db", "mdb"                        // database files
-    );
-
     public void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(
@@ -112,16 +105,6 @@ public class FileUploadValidator {
     private void validateFileExtension(String filename) {
         String extension = getFileExtension(filename).toLowerCase();
 
-        if (BLOCKED_EXTENSIONS.contains(extension)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    String.format(
-                            "File type '.%s' is not allowed for security reasons",
-                            extension
-                    )
-            );
-        }
-
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -160,26 +143,6 @@ public class FileUploadValidator {
             return "";
         }
         return filename.substring(lastDotIndex + 1);
-    }
-
-    /**
-     * Produces a filename safe for storage by removing risky characters.
-     */
-    public String sanitizeFilename(String originalFilename) {
-        if (originalFilename == null) {
-            return "file";
-        }
-
-        String filename = originalFilename.replaceAll("[/\\\\]", "");
-        filename = filename.replace("\0", "");
-        filename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
-        filename = filename.replaceAll("_{2,}", "_");
-
-        if (filename.isBlank() || filename.equals("_")) {
-            filename = "file";
-        }
-
-        return filename;
     }
 
     public String getAllowedFileTypesInfo() {

@@ -14,8 +14,6 @@ public class SpringSecurityAuditorAware implements AuditorAware<UUID> {
 
     @Override
     public Optional<UUID> getCurrentAuditor() {
-
-        System.out.println("in AUditorAware");
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
@@ -25,9 +23,6 @@ public class SpringSecurityAuditorAware implements AuditorAware<UUID> {
             return Optional.of(UUID.randomUUID()); // Fallback
         }
 
-        System.out.println("in AUditorAware " + ((UserPrincipal) authentication.getPrincipal()).getId());
-
         return Optional.of(((UserPrincipal) authentication.getPrincipal()).getId());
-        // = Username aus dem JWT
     }
 }

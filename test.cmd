@@ -13,6 +13,9 @@ echo.
 REM Set environment for test-isolated mode
 set SPRING_PROFILES_ACTIVE=test-isolated
 
+REM Set JWT secret for testing
+set JWT_SECRET_KEY=test-jwt-secret-key-minimum-32-characters-for-testing
+
 REM Clean and run tests with coverage
 echo [TEST] Cleaning previous test results...
 call mvnw.cmd clean -Ptest-isolated

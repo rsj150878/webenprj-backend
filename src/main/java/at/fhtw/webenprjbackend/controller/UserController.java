@@ -2,7 +2,14 @@ package at.fhtw.webenprjbackend.controller;
 
 import java.util.UUID;
 
-import at.fhtw.webenprjbackend.dto.*;
+import at.fhtw.webenprjbackend.dto.AdminUserResponse;
+import at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest;
+import at.fhtw.webenprjbackend.dto.CredentialChangeRequests;
+import at.fhtw.webenprjbackend.dto.PostResponse;
+import at.fhtw.webenprjbackend.dto.ProfileUpdateResponse;
+import at.fhtw.webenprjbackend.dto.UserProfileUpdateRequest;
+import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
+import at.fhtw.webenprjbackend.dto.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import at.fhtw.webenprjbackend.security.UserPrincipal;
+import at.fhtw.webenprjbackend.service.PostService;
 import at.fhtw.webenprjbackend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -58,13 +66,16 @@ public class UserController {
     private static final String MEDIA_TYPE_JSON = "application/json";
 
     private final UserService userService;
+    private final PostService postService;
 
     /**
      * Constructor for dependency injection
      * @param userService Service layer for user operations
+     * @param postService Service layer for post operations
      */
-    public UserController(UserService userService) {
+    public UserController(UserService userService, PostService postService) {
         this.userService = userService;
+        this.postService = postService;
     }
 
     // ===============================
@@ -113,6 +124,24 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @GetMapping("/count")
+    @Operation(
+        summary = "Get total user count",
+        description = "Returns the total number of registered users. Public endpoint for displaying community size on login page."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "User count retrieved successfully",
+        content = @Content(
+            mediaType = MEDIA_TYPE_JSON,
+            examples = @ExampleObject(value = "{\"count\": 42}")
+        )
+    )
+    public ResponseEntity<java.util.Map<String, Long>> getUserCount() {
+        long count = userService.getUserCount();
+        return ResponseEntity.ok(java.util.Map.of("count", count));
+    }
+
     // ===============================
     // Self-Service Endpoints - Profile Management
     // ===============================
@@ -149,23 +178,53 @@ public class UserController {
         return ResponseEntity.ok(userService.getCurrentUser(principal.getId()));
     }
 
+    @GetMapping("/me/activity")
+    @Operation(
+        summary = "Get user activity status",
+        description = "Get activity status for the currently authenticated user, including whether they've posted today.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "User activity status")
+    public ResponseEntity<java.util.Map<String, Object>> getActivityStatus(Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        boolean hasPostedToday = postService.hasUserPostedToday(principal.getId());
+        return ResponseEntity.ok(java.util.Map.of("hasPostedToday", hasPostedToday));
+    }
+
+    @GetMapping("/me/posts")
+    @Operation(
+        summary = "Get current user's posts and comments",
+        description = "Get all posts and comments by the currently authenticated user, ordered by most recent first.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "User's posts and comments")
+    public ResponseEntity<Page<PostResponse>> getMyPosts(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "10") @Positive @Max(50) int size) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(postService.getUserActivity(principal.getId(), pageable, principal.getId()));
+    }
+
     @PutMapping("/me")
     @Operation(
         summary = "Update current user profile",
-        description = "Update the profile information of the currently authenticated user (email, username, country, profile image).",
+        description = "Update the profile information of the currently authenticated user (email, username, country, profile image). " +
+                      "If email or username changes, a new JWT token will be returned in the response.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200", 
-            description = "Profile updated successfully",
+            responseCode = "200",
+            description = "Profile updated successfully. Response includes new token if credentials changed.",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
-                schema = @Schema(implementation = UserResponse.class)
+                schema = @Schema(implementation = ProfileUpdateResponse.class)
             )
         ),
         @ApiResponse(
-            responseCode = "400", 
+            responseCode = "400",
             description = "Invalid update data",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
@@ -176,7 +235,7 @@ public class UserController {
             )
         ),
         @ApiResponse(
-            responseCode = "409", 
+            responseCode = "409",
             description = "Email or username already taken by another user",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
@@ -187,13 +246,13 @@ public class UserController {
             )
         )
     })
-    public ResponseEntity<UserResponse> updateCurrentUserProfile(
+    public ResponseEntity<ProfileUpdateResponse> updateCurrentUserProfile(
             @Valid @RequestBody UserProfileUpdateRequest request,
             Authentication authentication) {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        UserResponse updated = userService.updateCurrentUserProfile(principal.getId(), request);
-        return ResponseEntity.ok(updated);
+        ProfileUpdateResponse response = userService.updateCurrentUserProfile(principal.getId(), request);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/me/password")
@@ -204,11 +263,11 @@ public class UserController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "204", 
+            responseCode = "204",
             description = "Password changed successfully"
         ),
         @ApiResponse(
-            responseCode = "400", 
+            responseCode = "400",
             description = "Invalid password data or current password incorrect",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
@@ -219,17 +278,94 @@ public class UserController {
             )
         ),
         @ApiResponse(
-            responseCode = "401", 
+            responseCode = "401",
             description = "Authentication required"
         )
     })
     public ResponseEntity<Void> changePassword(
-            @Valid @RequestBody ChangePasswordRequest request,
+            @Valid @RequestBody CredentialChangeRequests.PasswordChange request,
             Authentication authentication) {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         userService.changePassword(principal.getId(), request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/me/email")
+    @Operation(
+        summary = "Change email",
+        description = "Change the email of the currently authenticated user. Requires current password for verification. Returns new JWT token.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Email changed successfully. New token returned.",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                schema = @Schema(implementation = ProfileUpdateResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid email or current password incorrect",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                examples = @ExampleObject(
+                    name = "Password Error",
+                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":400,\"error\":\"Bad Request\",\"message\":\"Current password is incorrect\",\"path\":\"/users/me/email\"}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Email already in use",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                examples = @ExampleObject(
+                    name = "Conflict Error",
+                    value = "{\"timestamp\":\"2024-11-27T15:30:00.123\",\"status\":409,\"error\":\"Conflict\",\"message\":\"Email is already in use.\",\"path\":\"/users/me/email\"}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        )
+    })
+    public ResponseEntity<ProfileUpdateResponse> changeEmail(
+            @Valid @RequestBody CredentialChangeRequests.EmailChange request,
+            Authentication authentication) {
+
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        ProfileUpdateResponse response = userService.changeEmail(principal.getId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/me/avatar")
+    @Operation(
+        summary = "Remove avatar",
+        description = "Remove the profile avatar of the currently authenticated user. Resets to the default placeholder image.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Avatar removed successfully. Returns updated profile.",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                schema = @Schema(implementation = ProfileUpdateResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Authentication required"
+        )
+    })
+    public ResponseEntity<ProfileUpdateResponse> removeAvatar(Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        ProfileUpdateResponse response = userService.removeAvatar(principal.getId());
+        return ResponseEntity.ok(response);
     }
 
     // ===============================
@@ -404,7 +540,7 @@ public class UserController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200", 
+            responseCode = "200",
             description = "User status updated successfully",
             content = @Content(
                 mediaType = MEDIA_TYPE_JSON,
@@ -412,22 +548,55 @@ public class UserController {
             )
         ),
         @ApiResponse(
-            responseCode = "404", 
+            responseCode = "404",
             description = "User not found"
         ),
         @ApiResponse(
-            responseCode = "403", 
+            responseCode = "403",
             description = "Admin privileges required"
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> adminSetUserActive(
-            @Parameter(description = "User UUID", required = true) 
+    public ResponseEntity<AdminUserResponse> adminSetUserActive(
+            @Parameter(description = "User UUID", required = true)
             @PathVariable UUID id,
-            @Parameter(description = "Set user active status", required = true, example = "true") 
+            @Parameter(description = "Set user active status", required = true, example = "true")
             @RequestParam("active") boolean active) {
 
-        UserResponse updated = userService.adminToggleActive(id, active);
+        AdminUserResponse updated = userService.adminToggleActive(id, active);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}/avatar")
+    @Operation(
+        summary = "Remove user avatar (Admin only)",
+        description = "Remove the profile avatar of any user. Resets to the default placeholder image. Requires admin privileges.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Avatar removed successfully. Returns updated user.",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                schema = @Schema(implementation = AdminUserResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "User not found"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Admin privileges required"
+        )
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminUserResponse> adminRemoveUserAvatar(
+            @Parameter(description = "User UUID", required = true)
+            @PathVariable UUID id) {
+
+        AdminUserResponse updated = userService.adminRemoveAvatar(id);
         return ResponseEntity.ok(updated);
     }
 }

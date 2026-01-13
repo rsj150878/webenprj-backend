@@ -98,6 +98,18 @@ public class PostController {
             @Pattern(regexp = "all|following", flags = Pattern.Flag.CASE_INSENSITIVE,
                     message = "filter must be 'all' or 'following'")
             String filter,
+            @Parameter(
+                description = "Optional subject/tag to filter posts by (case-insensitive)",
+                example = "programming",
+                required = false
+            )
+            @RequestParam(required = false) String subject,
+            @Parameter(
+                description = "Optional author ID to filter posts by a specific user",
+                example = "123e4567-e89b-12d3-a456-426614174000",
+                required = false
+            )
+            @RequestParam(required = false) UUID authorId,
             Authentication authentication) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -107,10 +119,35 @@ public class PostController {
         if ("following".equalsIgnoreCase(filter)) {
             return ResponseEntity.ok(postService.getFollowingPosts(pageable, currentUserId));
         }
+        if (authorId != null) {
+            return ResponseEntity.ok(postService.getPostsByAuthor(authorId, pageable, currentUserId));
+        }
+        if (subject != null && !subject.isBlank()) {
+            return ResponseEntity.ok(postService.searchBySubject(subject, pageable, currentUserId));
+        }
         if (search != null && !search.isBlank()) {
             return ResponseEntity.ok(postService.searchPosts(search, pageable, currentUserId));
         }
         return ResponseEntity.ok(postService.getAllPosts(pageable, currentUserId));
+    }
+
+    @GetMapping("/subjects")
+    @Operation(
+        summary = "Get available subjects/tags",
+        description = "Retrieve all unique subjects/tags used in posts. Useful for filtering."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Subjects retrieved successfully",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = String.class))
+            )
+        )
+    })
+    public ResponseEntity<java.util.List<String>> getSubjects() {
+        return ResponseEntity.ok(postService.getAvailableSubjects());
     }
 
     @GetMapping("/{id}")
@@ -138,6 +175,37 @@ public class PostController {
             Authentication authentication) {
         UUID currentUserId = extractUserId(authentication);
         return ResponseEntity.ok(postService.getPostById(id, currentUserId));
+    }
+
+    @GetMapping("/{id}/comments")
+    @Operation(
+        summary = "Get comments for a post",
+        description = "Retrieve all direct comments on a post, paginated and ordered by creation time ascending."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Comments retrieved successfully",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = PostResponse.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Post not found"
+        )
+    })
+    public ResponseEntity<Page<PostResponse>> getComments(
+            @Parameter(description = "Post UUID", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size,
+            Authentication authentication) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt"));
+        UUID currentUserId = extractUserId(authentication);
+        return ResponseEntity.ok(postService.getCommentsForPost(id, pageable, currentUserId));
     }
 
     // ===============================

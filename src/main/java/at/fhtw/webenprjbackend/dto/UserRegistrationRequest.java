@@ -70,6 +70,14 @@ public class UserRegistrationRequest {
     )
     private String profileImageUrl;
 
+    @Size(max = 48, message = "Salutation cannot exceed 48 characters")
+    @Schema(
+        description = "Optional salutation or title (e.g., Dr., Prof., or custom text)",
+        example = "Dr.",
+        nullable = true
+    )
+    private String salutation;
+
     // ===============================
     // Constructors
     // ===============================
@@ -152,6 +160,14 @@ public class UserRegistrationRequest {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getSalutation() {
+        return salutation;
+    }
+
+    public void setSalutation(String salutation) {
+        this.salutation = salutation;
     }
 
     // ===============================

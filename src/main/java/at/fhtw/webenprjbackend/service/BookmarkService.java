@@ -1,6 +1,5 @@
 package at.fhtw.webenprjbackend.service;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import at.fhtw.webenprjbackend.dto.BookmarkCollectionResponse;
-import at.fhtw.webenprjbackend.dto.BookmarkCreateRequest;
+import at.fhtw.webenprjbackend.dto.BookmarkCreateResult;
+import at.fhtw.webenprjbackend.dto.BookmarkRequest;
 import at.fhtw.webenprjbackend.dto.BookmarkResponse;
-import at.fhtw.webenprjbackend.dto.BookmarkUpdateRequest;
 import at.fhtw.webenprjbackend.dto.CollectionCreateRequest;
 import at.fhtw.webenprjbackend.entity.BookmarkCollection;
 import at.fhtw.webenprjbackend.entity.Post;
@@ -43,6 +42,7 @@ public class BookmarkService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
+    /** Constructor with DI. */
     public BookmarkService(
         PostBookmarkRepository bookmarkRepository,
         BookmarkCollectionRepository collectionRepository,
@@ -57,11 +57,9 @@ public class BookmarkService {
 
     // ========== Bookmark Operations ==========
 
-    /**
-     * Create a bookmark (idempotent - returns existing if duplicate)
-     */
+    /** Create a bookmark (idempotent - returns existing if duplicate) */
     @Transactional
-    public BookmarkResponse createBookmark(UUID postId, UUID userId, BookmarkCreateRequest request) {
+    public BookmarkCreateResult createBookmark(UUID postId, UUID userId, BookmarkRequest request) {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
         User user = userRepository.findById(userId)
@@ -70,7 +68,7 @@ public class BookmarkService {
         // Idempotent - return existing if already bookmarked
         Optional<PostBookmark> existing = bookmarkRepository.findByUserAndPost(user, post);
         if (existing.isPresent()) {
-            return mapToBookmarkResponse(existing.get());
+            return new BookmarkCreateResult(mapToBookmarkResponse(existing.get()), false);
         }
 
         BookmarkCollection collection = null;
@@ -86,7 +84,7 @@ public class BookmarkService {
 
         PostBookmark bookmark = new PostBookmark(user, post, collection, request.notes());
         PostBookmark saved = bookmarkRepository.save(bookmark);
-        return mapToBookmarkResponse(saved);
+        return new BookmarkCreateResult(mapToBookmarkResponse(saved), true);
     }
 
     /**
@@ -106,7 +104,7 @@ public class BookmarkService {
      * Update bookmark metadata (move to collection, update notes)
      */
     @Transactional
-    public BookmarkResponse updateBookmark(UUID postId, UUID userId, BookmarkUpdateRequest request) {
+    public BookmarkResponse updateBookmark(UUID postId, UUID userId, BookmarkRequest request) {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
         User user = userRepository.findById(userId)
@@ -309,12 +307,15 @@ public class BookmarkService {
     }
 
     /**
-     * Create a minimal PostResponse without fetching like/bookmark counts
+     * Create a minimal PostResponse without fetching like/bookmark/comment counts
      * This is used in BookmarkResponse to avoid circular dependencies
      */
     private at.fhtw.webenprjbackend.dto.PostResponse createMinimalPostResponse(Post post) {
         return new at.fhtw.webenprjbackend.dto.PostResponse(
             post.getId(),
+            post.getParent() != null ? post.getParent().getId() : null, // parentId
+            0L, // commentCount - not fetched in bookmark context
+            post.getParent() != null && !post.getParent().isActive(), // parentDeleted
             "#" + post.getSubject(),
             post.getContent(),
             post.getImageUrl(),
