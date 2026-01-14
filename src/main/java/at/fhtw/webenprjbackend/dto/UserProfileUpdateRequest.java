@@ -46,16 +46,24 @@ public class UserProfileUpdateRequest {
 
     @Size(max = 500, message = "Profile image URL cannot exceed 500 characters")
     @Pattern(
-        regexp = "^(https?://).*\\.(jpg|jpeg|png|gif|webp)$",
-        message = "Must be a valid HTTP(S) URL ending with jpg, jpeg, png, gif, or webp",
+        regexp = "^(/medias/[a-fA-F0-9-]{36}|(https?://).*\\.(jpg|jpeg|png|gif|webp|avif))$",
+        message = "Must be either a media reference (/medias/{uuid}) or a valid HTTP(S) URL ending with jpg, jpeg, png, gif, webp, or avif",
         flags = Pattern.Flag.CASE_INSENSITIVE
     )
     @Schema(
-        description = "Updated profile image URL (optional)", 
-        example = "https://example.com/images/new-profile.png",
+        description = "Updated profile image URL (optional) - can be a media reference (/medias/{uuid}) or external URL",
+        example = "/medias/123e4567-e89b-12d3-a456-426614174000",
         nullable = true
     )
     private String profileImageUrl;
+
+    @Size(max = 48, message = "Salutation cannot exceed 48 characters")
+    @Schema(
+        description = "Updated salutation or title (optional)",
+        example = "Dr.",
+        nullable = true
+    )
+    private String salutation;
 
     // ===============================
     // Constructors
@@ -124,8 +132,16 @@ public class UserProfileUpdateRequest {
         return profileImageUrl; 
     }
     
-    public void setProfileImageUrl(String profileImageUrl) { 
-        this.profileImageUrl = profileImageUrl; 
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getSalutation() {
+        return salutation;
+    }
+
+    public void setSalutation(String salutation) {
+        this.salutation = salutation;
     }
 
     // ===============================

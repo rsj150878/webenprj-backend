@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import io.minio.MinioClient;
 
 @Configuration
-@Profile("!docker-free") // Exclude from docker-free profile
+@Profile("!docker-free & !test") // Exclude from docker-free and test profiles
 public class MinioClientBackendConfig {
 
     @Bean

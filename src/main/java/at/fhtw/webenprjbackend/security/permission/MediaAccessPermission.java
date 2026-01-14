@@ -33,6 +33,7 @@ public class MediaAccessPermission implements AccessPermission {
                 new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied")
         );
 
+        // Only the owner (or admin) can delete media
         return ((UserPrincipal) authentication.getPrincipal()).getId().equals(media.getCreateUser());
     }
 }

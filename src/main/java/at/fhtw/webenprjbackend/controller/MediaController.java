@@ -107,7 +107,8 @@ public class MediaController {
     @GetMapping("/{id}")
     @Operation(
             summary = "Retrieve a file",
-            description = "Download a previously uploaded file by its ID. Public endpoint."
+            description = "Download a previously uploaded file by its ID. Requires authentication. Accessible by any authenticated user (for profile pictures, post images, etc.).",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -128,7 +129,6 @@ public class MediaController {
                     )
             )
     })
-    @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Media', 'read')")
     public ResponseEntity<Resource> retrieve(
             @Parameter(description = "Media UUID", required = true)
             @PathVariable UUID id) {
@@ -146,6 +146,17 @@ public class MediaController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Delete a media file",
+            description = "Delete a previously uploaded media file. Requires ownership or admin privileges.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Media deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Media not found"),
+            @ApiResponse(responseCode = "403", description = "Not authorized to delete this media"),
+            @ApiResponse(responseCode = "401", description = "Authentication required")
+    })
     @PreAuthorize("hasPermission(#id, 'at.fhtw.webenprjbackend.entity.Media', 'delete')")
     public ResponseEntity<Void> delete(
             @Parameter(description = "Media UUID", required = true)
@@ -153,9 +164,7 @@ public class MediaController {
 
         log.info("Deleting media file: id={}", id);
 
-
         mediaService.delete(id);
-
 
         return ResponseEntity.noContent().build();
     }
