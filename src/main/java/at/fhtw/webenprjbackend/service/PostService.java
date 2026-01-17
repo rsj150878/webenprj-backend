@@ -44,7 +44,7 @@ public class PostService {
     private final BookmarkService bookmarkService;
 
 
-    @Value("${app.public-base-url}")
+    @Value("${app.public-base-url:http://localhost:8081}")
     private String publicBaseUrl;
 
 
