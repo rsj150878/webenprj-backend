@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
@@ -40,6 +42,11 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final FollowRepository followRepository;
     private final BookmarkService bookmarkService;
+
+
+    @Value("${app.public-base-url}")
+    private String publicBaseUrl;
+
 
     /** Constructor with DI. */
     public PostService(PostRepository postRepository, UserRepository userRepository,
@@ -246,7 +253,7 @@ public class PostService {
                 parentDeleted,
                 "#" + post.getSubject(), // Add '#' for frontend display
                 post.getContent(),
-                post.getImageUrl(),
+                toAbsoluteMediaUrl(post.getImageUrl()),
                 post.getCreatedAt(),
                 post.getUpdatedAt(),
                 post.getUser().getId(),
@@ -328,4 +335,14 @@ public class PostService {
         Page<Post> posts = postRepository.findByUserIdAndActiveTrueOrderByCreatedAtDesc(userId, pageable);
         return mapPageWithLikes(posts, currentUserId);
     }
+
+    private String toAbsoluteMediaUrl(String url) {
+        if (url == null || url.isBlank()) return null;
+        if (url.startsWith("http://") || url.startsWith("https://")) return url;
+
+        String normalized = url.startsWith("/") ? url : "/" + url;
+        return publicBaseUrl + normalized;
+    }
+
+
 }

@@ -28,7 +28,7 @@ public class FileUploadValidator {
     );
 
     // Maximum file size: 10 MB
-    private static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
     public void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {

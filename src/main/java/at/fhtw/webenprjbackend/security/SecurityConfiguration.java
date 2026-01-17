@@ -75,7 +75,9 @@ public class SecurityConfiguration {
                     auth
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users/count").permitAll();
+                        .requestMatchers(HttpMethod.GET, "/users/count").permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/medias/**").permitAll();
 
                     if (isDevelopmentMode) {
                         auth
