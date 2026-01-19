@@ -23,17 +23,20 @@ public class MediaAccessPermission implements AccessPermission {
     }
 
     @Override
-    public boolean hasPermission(Authentication authentication, UUID resourceId) {
+    public boolean hasPermission(Authentication authentication, UUID resourceId, String permission) {
 
         if (isAdmin(authentication)) {
             return true;
         }
 
-        Media media = mediaRepository.findById(resourceId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied")
-        );
+        if (!"delete".equalsIgnoreCase(permission)) {
+            return false;
+        }
 
-        // Only the owner (or admin) can delete media
+        Media media = mediaRepository.findById(resourceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found"));
+
         return ((UserPrincipal) authentication.getPrincipal()).getId().equals(media.getCreateUser());
     }
-}
+
+    }

@@ -375,8 +375,13 @@ clean-install.cmd            # Nuclear recovery
 - `DELETE /posts/{id}` - Delete post (owner or admin)
 
 **Media:**
-- `POST /medias` - Upload file (jpg, png, gif, pdf - max 10MB)
+- `POST /medias` - Upload file (jpg, png, gif, pdf - max 25MB)
 - `GET /medias/{id}` - Download file
+  Note about media access:
+  - GET /medias/{id} is intentionally public so the frontend can render images via standard browser <img src="..."> requests.
+    These requests do not include an Authorization header.
+  - Upload and delete remain protected (JWT required). Delete is restricted to owner/admin.
+  - Anonymous users cannot list posts or media IDs; media is referenced only via non-guessable UUIDs.
 
 **RESTful Design:**
 - Query parameters for filtering collections: `GET /posts?search=keyword`

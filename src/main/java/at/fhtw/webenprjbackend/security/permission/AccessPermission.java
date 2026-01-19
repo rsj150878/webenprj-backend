@@ -12,7 +12,7 @@ public interface AccessPermission {
     Logger LOGGER = LoggerFactory.getLogger(AccessPermission.class);
 
     boolean supports(Authentication authentication, String className);
-    boolean hasPermission(Authentication authentication, UUID resourceId);
+    boolean hasPermission(Authentication authentication, UUID resourceId, String permission);
 
     default  boolean isAdmin(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
