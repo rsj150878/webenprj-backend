@@ -129,7 +129,7 @@ public class UserService {
         User saved = userRepository.save(user);
         UserResponse userResponse = toResponse(saved);
 
-        // Issue new token if credentials changed
+        // new token needed - old one has stale username/email
         if (credentialsChanged) {
             String newToken = tokenIssuer.issue(saved.getId(), saved.getUsername(), saved.getRole().name());
             return new ProfileUpdateResponse(userResponse, newToken, true);
