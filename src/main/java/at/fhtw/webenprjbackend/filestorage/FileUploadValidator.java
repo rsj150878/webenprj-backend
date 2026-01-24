@@ -15,8 +15,8 @@ public class FileUploadValidator {
 
     // Allowed file extensions (case-insensitive)
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            "jpg", "jpeg", "png", "gif",  // images
-            "pdf"                         // documents
+            "jpg", "jpeg", "png", "gif", "webp", "avif",  // images
+            "pdf"                                          // documents
     );
 
     // Allowed MIME types
@@ -24,6 +24,8 @@ public class FileUploadValidator {
             "image/jpeg",
             "image/png",
             "image/gif",
+            "image/webp",
+            "image/avif",
             "application/pdf"
     );
 

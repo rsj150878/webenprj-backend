@@ -350,22 +350,18 @@ public class UserController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200",
-            description = "Avatar removed successfully. Returns updated profile.",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                schema = @Schema(implementation = ProfileUpdateResponse.class)
-            )
+            responseCode = "204",
+            description = "Avatar removed successfully"
         ),
         @ApiResponse(
             responseCode = "401",
             description = "Authentication required"
         )
     })
-    public ResponseEntity<ProfileUpdateResponse> removeAvatar(Authentication authentication) {
+    public ResponseEntity<Void> removeAvatar(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        ProfileUpdateResponse response = userService.removeAvatar(principal.getId());
-        return ResponseEntity.ok(response);
+        userService.removeAvatar(principal.getId());
+        return ResponseEntity.noContent().build();
     }
 
     // ===============================
@@ -575,12 +571,8 @@ public class UserController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200",
-            description = "Avatar removed successfully. Returns updated user.",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                schema = @Schema(implementation = AdminUserResponse.class)
-            )
+            responseCode = "204",
+            description = "Avatar removed successfully"
         ),
         @ApiResponse(
             responseCode = "404",
@@ -592,11 +584,11 @@ public class UserController {
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AdminUserResponse> adminRemoveUserAvatar(
+    public ResponseEntity<Void> adminRemoveUserAvatar(
             @Parameter(description = "User UUID", required = true)
             @PathVariable UUID id) {
 
-        AdminUserResponse updated = userService.adminRemoveAvatar(id);
-        return ResponseEntity.ok(updated);
+        userService.adminRemoveAvatar(id);
+        return ResponseEntity.noContent().build();
     }
 }
