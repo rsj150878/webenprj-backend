@@ -53,7 +53,6 @@ public class UserService {
         this.defaultProfileImage = defaultProfileImage;
     }
 
-    // ======================== Register ========================
     @Transactional
     public UserResponse registerUser(UserRegistrationRequest request) {
 
@@ -79,7 +78,6 @@ public class UserService {
         return toResponse(saved);
     }
 
-    // ======================== General Methods ========================
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         Page<User> userPage = userRepository.findAll(pageable);
         return toResponsePage(userPage);
@@ -99,7 +97,6 @@ public class UserService {
         return toResponse(user);
     }
 
-    // ======================== Self-Service for logged in users ========================
     public UserResponse getCurrentUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -193,7 +190,6 @@ public class UserService {
         return new ProfileUpdateResponse(toResponse(saved));
     }
 
-    // ======================== Admin-Functions ========================
     @Transactional
     public Page<AdminUserResponse> adminGetAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
@@ -266,7 +262,6 @@ public class UserService {
                 ).map(this::toAdminResponse);
     }
 
-    // ======================== Helper ========================
 
     /**
      * Converts a page of users to UserResponse with batch-loaded follow counts.

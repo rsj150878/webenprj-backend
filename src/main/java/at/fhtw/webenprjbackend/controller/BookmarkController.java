@@ -59,7 +59,6 @@ public class BookmarkController {
         this.bookmarkService = bookmarkService;
     }
 
-    // ========== Bookmark Operations ==========
 
     @PostMapping("/posts/{postId}")
     @Operation(
@@ -207,7 +206,6 @@ public class BookmarkController {
         return ResponseEntity.ok(bookmarks);
     }
 
-    // ========== Collection Operations ==========
 
     @PostMapping("/collections")
     @Operation(

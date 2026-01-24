@@ -96,9 +96,7 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ===============================
     // Constructors
-    // ===============================
     public User() {}
 
     public User(String email,
@@ -133,9 +131,7 @@ public class User {
         this.active = true;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
     public UUID getId() {
         return id;
     }

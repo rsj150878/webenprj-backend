@@ -100,9 +100,7 @@ public class Post {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ===============================
     // Constructors
-    // ===============================
     public Post() {}
 
     public Post(String subject, String content, String imageUrl, User user) {
@@ -112,9 +110,7 @@ public class Post {
         this.user = user;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
     public UUID getId() {
         return id;
     }

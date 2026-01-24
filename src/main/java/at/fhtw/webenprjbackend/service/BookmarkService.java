@@ -55,7 +55,6 @@ public class BookmarkService {
         this.userRepository = userRepository;
     }
 
-    // ========== Bookmark Operations ==========
 
     /** Create a bookmark (idempotent - returns existing if duplicate) */
     @Transactional
@@ -168,7 +167,6 @@ public class BookmarkService {
         return bookmarks.map(this::mapToBookmarkResponse);
     }
 
-    // ========== Collection Operations ==========
 
     /**
      * Create a collection
@@ -245,7 +243,6 @@ public class BookmarkService {
             .toList();
     }
 
-    // ========== Bulk Queries for PostService Integration ==========
 
     /**
      * Fetch bookmark counts for multiple posts (prevents N+1 queries)
@@ -273,7 +270,6 @@ public class BookmarkService {
         return Set.copyOf(bookmarkRepository.findBookmarkedPostIds(currentUserId, postIds));
     }
 
-    // ========== Private Mapping Methods ==========
 
     private BookmarkResponse mapToBookmarkResponse(PostBookmark bookmark) {
         // Create a minimal PostResponse for the bookmark

@@ -65,7 +65,6 @@ public class UserPrincipal implements UserDetails {
         return authorities.stream().anyMatch(a -> a.getAuthority().equals(wanted));
     }
 
-    // ===== UserDetails-Methods =====
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;

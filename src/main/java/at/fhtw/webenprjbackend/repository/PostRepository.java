@@ -39,7 +39,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
     Page<Post> findByUserIdInOrderByCreatedAtDesc(List<UUID> userIds, Pageable pageable);
 
-    // ========== Top-level posts only (active, no parent) ==========
 
     /**
      * Find all active top-level posts (not comments) ordered by creation time.
@@ -64,7 +63,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     Page<Post> findByParentIsNullAndActiveTrueAndUserIdInOrderByCreatedAtDesc(
             List<UUID> userIds, Pageable pageable);
 
-    // ========== Comments for a specific post ==========
 
     /**
      * Get active direct comments on a post ordered by creation time ascending.
@@ -84,7 +82,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            "GROUP BY p.parent.id")
     List<Object[]> countCommentsByParentIds(@Param("parentIds") Collection<UUID> parentIds);
 
-    // ========== User activity checks ==========
 
     /**
      * Check if user has posted (top-level, active) since a given time.
@@ -108,7 +105,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("SELECT DISTINCT p.subject FROM Post p WHERE p.parent IS NULL AND p.active = true ORDER BY p.subject")
     List<String> findDistinctSubjects();
 
-    // ========== Admin statistics ==========
 
     /**
      * Count all top-level posts (excluding comments).
@@ -130,7 +126,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
      */
     long countByParentIsNotNullAndActiveTrue();
 
-    // ========== Admin listing with filters ==========
 
     /**
      * Find all posts (including inactive) for admin, ordered by creation time desc.

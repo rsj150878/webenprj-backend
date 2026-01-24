@@ -78,9 +78,7 @@ public class UserRegistrationRequest {
     )
     private String salutation;
 
-    // ===============================
     // Constructors
-    // ===============================
 
     /**
      * Default constructor for Jackson deserialization
@@ -118,9 +116,7 @@ public class UserRegistrationRequest {
         this.profileImageUrl = profileImageUrl;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
 
     public String getEmail() {
         return email;
@@ -170,9 +166,6 @@ public class UserRegistrationRequest {
         this.salutation = salutation;
     }
 
-    // ===============================
-    // Utility Methods
-    // ===============================
 
     /**
      * Checks if a profile image is provided during registration
@@ -217,9 +210,6 @@ public class UserRegistrationRequest {
         return password != null && password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$");
     }
 
-    // ===============================
-    // Object Methods
-    // ===============================
 
     @Override
     public String toString() {

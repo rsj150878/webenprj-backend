@@ -346,7 +346,6 @@ public class PostService {
         return publicBaseUrl + normalized;
     }
 
-    // ========== Admin Methods ==========
 
     /**
      * Get post statistics for admin dashboard.

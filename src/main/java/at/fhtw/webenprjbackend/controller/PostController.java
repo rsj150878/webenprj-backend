@@ -45,9 +45,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * REST Controller for managing study posts.
- * Handles CRUD operations for posts including creation, reading, updating, and deletion.
- * Also provides search functionality for finding posts by keywords.
+ * Post management endpoints.
  */
 @RestController
 @RequestMapping("/posts")
@@ -59,18 +57,9 @@ public class PostController {
 
     private final PostService postService;
 
-    /**
-     * Constructor for dependency injection
-     * @param postService Service layer for post operations
-     */
     public PostController(PostService postService) {
         this.postService = postService;
     }
-
-
-    // ===============================
-    // GET Operations
-    // ===============================
 
     @GetMapping
     @Operation(
@@ -211,9 +200,7 @@ public class PostController {
         return ResponseEntity.ok(postService.getCommentsForPost(id, pageable, currentUserId));
     }
 
-    // ===============================
     // POST Operations (Create)
-    // ===============================
 
     @PostMapping
     @Operation(
@@ -248,9 +235,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // ===============================
     // PUT Operations (Update)
-    // ===============================
 
     @PutMapping("/{id}")
     @Operation(
@@ -294,9 +279,7 @@ public class PostController {
         return ResponseEntity.ok(updated);
     }
 
-    // ===============================
     // DELETE Operations
-    // ===============================
 
     @DeleteMapping("/{id}")
     @Operation(
@@ -331,9 +314,6 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    // ===============================
-    // Admin Operations
-    // ===============================
 
     @GetMapping("/admin")
     @Operation(

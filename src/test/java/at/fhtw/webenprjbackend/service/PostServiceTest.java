@@ -775,7 +775,6 @@ class PostServiceTest {
         }
     }
 
-    // ========== Admin Method Tests ==========
 
     @Nested
     @DisplayName("getAdminPostStats()")

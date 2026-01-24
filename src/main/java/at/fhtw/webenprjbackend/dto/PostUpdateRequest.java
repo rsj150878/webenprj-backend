@@ -47,9 +47,7 @@ public class PostUpdateRequest {
     )
     private String imageUrl;
 
-    // ===============================
     // Constructors
-    // ===============================
 
     /**
      * Default constructor for Jackson deserialization
@@ -78,9 +76,7 @@ public class PostUpdateRequest {
         this.imageUrl = imageUrl;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
 
     public String getSubject() {
         return subject;

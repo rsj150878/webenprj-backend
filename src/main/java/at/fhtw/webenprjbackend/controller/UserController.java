@@ -49,13 +49,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 /**
- * REST Controller for comprehensive user management in the Motivise platform.
- * Provides public registration, self-service profile management, and administrative user operations.
- * 
- * Features:
- * - Public user registration
- * - Self-service profile management (view, update, password change)
- * - Administrative user management (CRUD operations, search, activation)
+ * User management endpoints: registration, profile updates, and admin operations.
  */
 @RestController
 @RequestMapping("/users")
@@ -68,19 +62,10 @@ public class UserController {
     private final UserService userService;
     private final PostService postService;
 
-    /**
-     * Constructor for dependency injection
-     * @param userService Service layer for user operations
-     * @param postService Service layer for post operations
-     */
     public UserController(UserService userService, PostService postService) {
         this.userService = userService;
         this.postService = postService;
     }
-
-    // ===============================
-    // Public Endpoints - Registration
-    // ===============================
 
     @PostMapping
     @Operation(
@@ -142,9 +127,6 @@ public class UserController {
         return ResponseEntity.ok(java.util.Map.of("count", count));
     }
 
-    // ===============================
-    // Self-Service Endpoints - Profile Management
-    // ===============================
 
     @GetMapping("/me")
     @Operation(
@@ -364,9 +346,6 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // ===============================
-    // Admin Endpoints - User Management
-    // ===============================
 
     @GetMapping
     @Operation(

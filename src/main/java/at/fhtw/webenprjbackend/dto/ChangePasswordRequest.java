@@ -36,9 +36,7 @@ public class ChangePasswordRequest {
     )
     private String newPassword;
 
-    // ===============================
     // Constructors
-    // ===============================
 
     /**
      * Default constructor for Jackson deserialization
@@ -55,9 +53,7 @@ public class ChangePasswordRequest {
         this.newPassword = newPassword;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
 
     public String getCurrentPassword() { 
         return currentPassword; 
@@ -75,9 +71,6 @@ public class ChangePasswordRequest {
         this.newPassword = newPassword; 
     }
 
-    // ===============================
-    // Object Methods
-    // ===============================
 
     @Override
     public String toString() {
