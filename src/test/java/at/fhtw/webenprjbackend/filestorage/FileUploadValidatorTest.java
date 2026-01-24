@@ -120,7 +120,7 @@ class FileUploadValidatorTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file",
                 "image.png",
-                "image/webp",
+                "image/svg+xml",
                 "dummy".getBytes()
         );
 

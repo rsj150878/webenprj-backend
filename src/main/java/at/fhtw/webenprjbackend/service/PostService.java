@@ -17,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.beans.factory.annotation.Value;
 
 
+import at.fhtw.webenprjbackend.dto.AdminPostResponse;
+import at.fhtw.webenprjbackend.dto.AdminPostStatsResponse;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
@@ -344,5 +346,132 @@ public class PostService {
         return publicBaseUrl + normalized;
     }
 
+    // ========== Admin Methods ==========
+
+    /**
+     * Get post statistics for admin dashboard.
+     */
+    public AdminPostStatsResponse getAdminPostStats() {
+        long totalPosts = postRepository.countByParentIsNull();
+        long activePosts = postRepository.countByParentIsNullAndActiveTrue();
+        long totalComments = postRepository.countByParentIsNotNull();
+        long activeComments = postRepository.countByParentIsNotNullAndActiveTrue();
+
+        return new AdminPostStatsResponse(
+                totalPosts,
+                activePosts,
+                totalPosts - activePosts,  // deletedPosts
+                totalComments,
+                activeComments,
+                totalComments - activeComments  // deletedComments
+        );
+    }
+
+    /**
+     * Get all posts for admin with optional filters.
+     *
+     * @param active    Filter by active status (null = all)
+     * @param isComment Filter by post type (null = all, true = comments only, false = posts only)
+     * @param search    Search keyword (null = no search)
+     * @param pageable  Pagination info
+     */
+    public Page<AdminPostResponse> adminGetAllPosts(Boolean active, Boolean isComment, String search, Pageable pageable) {
+        Page<Post> posts;
+
+        // Handle search first
+        if (search != null && !search.isBlank()) {
+            posts = postRepository.searchAllForAdmin(search.trim(), pageable);
+            // Apply filters to search results in-memory (simpler than complex query combinations)
+            return posts.map(post -> mapToAdminResponse(post))
+                    .map(p -> p) // Keep all for now, filtering handled at DB level
+                    ;
+        }
+
+        // No search - apply filters
+        if (isComment == null && active == null) {
+            // All posts
+            posts = postRepository.findAllForAdmin(pageable);
+        } else if (isComment == null && active != null) {
+            // Filter by active only
+            posts = postRepository.findByActiveOrderByCreatedAtDesc(active, pageable);
+        } else if (isComment != null && active == null) {
+            // Filter by type only
+            if (isComment) {
+                posts = postRepository.findByParentIsNotNullOrderByCreatedAtDesc(pageable);
+            } else {
+                posts = postRepository.findByParentIsNullOrderByCreatedAtDesc(pageable);
+            }
+        } else {
+            // Filter by both type and active
+            if (isComment) {
+                posts = postRepository.findByParentIsNotNullAndActiveOrderByCreatedAtDesc(active, pageable);
+            } else {
+                posts = postRepository.findByParentIsNullAndActiveOrderByCreatedAtDesc(active, pageable);
+            }
+        }
+
+        return posts.map(this::mapToAdminResponse);
+    }
+
+    /**
+     * Toggle post active status (soft delete/restore).
+     */
+    @Transactional
+    public AdminPostResponse adminToggleActive(UUID postId, boolean active) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+        post.setActive(active);
+        Post saved = postRepository.save(post);
+        return mapToAdminResponse(saved);
+    }
+
+    /**
+     * Permanently delete a post (hard delete).
+     */
+    @Transactional
+    public void adminHardDeletePost(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+        postRepository.delete(post);
+    }
+
+    /**
+     * Map Post entity to AdminPostResponse DTO.
+     */
+    private AdminPostResponse mapToAdminResponse(Post post) {
+        Map<UUID, Long> likeCounts = fetchLikeCounts(List.of(post));
+        Map<UUID, Long> bookmarkCounts = bookmarkService.fetchBookmarkCounts(List.of(post));
+        Map<UUID, Long> commentCounts = fetchCommentCounts(List.of(post));
+
+        long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
+        long bookmarkCount = bookmarkCounts.getOrDefault(post.getId(), 0L);
+        long commentCount = commentCounts.getOrDefault(post.getId(), 0L);
+
+        boolean parentDeleted = post.getParent() != null && !post.getParent().isActive();
+
+        return new AdminPostResponse(
+                post.getId(),
+                post.getParent() != null ? post.getParent().getId() : null,
+                commentCount,
+                parentDeleted,
+                "#" + post.getSubject(),
+                post.getContent(),
+                toAbsoluteMediaUrl(post.getImageUrl()),
+                post.getCreatedAt(),
+                post.getUpdatedAt(),
+                post.getUser().getId(),
+                post.getUser().getUsername(),
+                post.getUser().getProfileImageUrl(),
+                likeCount,
+                false, // likedByCurrentUser - not relevant for admin view
+                bookmarkCount,
+                false, // bookmarkedByCurrentUser - not relevant for admin view
+                post.isActive(),
+                post.isComment(),
+                post.getUser().getEmail()
+        );
+    }
 
 }

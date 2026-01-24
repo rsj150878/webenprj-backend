@@ -424,4 +424,352 @@ class PostServiceTest {
             verify(postRepository).findByParentIsNullAndActiveTrueOrderByCreatedAtDesc(pageable);
         }
     }
+
+    @Nested
+    @DisplayName("getFollowingPosts()")
+    class GetFollowingPostsTests {
+
+        @Test
+        @DisplayName("should return empty page when user follows no one")
+        void getFollowingPosts_noFollowing_returnsEmpty() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(followRepository.findByFollower(eq(testUser), any(Pageable.class)))
+                    .thenReturn(Page.empty());
+
+            // Act
+            Page<PostResponse> result = postService.getFollowingPosts(pageable, testUserId);
+
+            // Assert
+            assertThat(result).isEmpty();
+            verify(postRepository, never()).findByParentIsNullAndActiveTrueAndUserIdInOrderByCreatedAtDesc(any(), any());
+        }
+
+        @Test
+        @DisplayName("should throw exception when user is null")
+        void getFollowingPosts_nullUser_throwsUnauthorized() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // Act & Assert
+            assertThatThrownBy(() -> postService.getFollowingPosts(pageable, null))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Authentication required");
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void getFollowingPosts_userNotFound_throwsNotFound() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            when(userRepository.findById(testUserId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> postService.getFollowingPosts(pageable, testUserId))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("getCommentsForPost()")
+    class GetCommentsForPostTests {
+
+        @Test
+        @DisplayName("should return comments for existing post")
+        void getCommentsForPost_postExists_returnsComments() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Post comment = createTestPost(UUID.randomUUID(), "reply", "This is a comment", testUser);
+            List<Post> comments = List.of(comment);
+            Page<Post> commentPage = new PageImpl<>(comments, pageable, 1);
+
+            when(postRepository.existsById(testPostId)).thenReturn(true);
+            when(postRepository.findByParentIdAndActiveTrueOrderByCreatedAtAsc(testPostId, pageable))
+                    .thenReturn(commentPage);
+            setupMocksForMapping(comments);
+
+            // Act
+            Page<PostResponse> result = postService.getCommentsForPost(testPostId, pageable, testUserId);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("should throw exception when post not found")
+        void getCommentsForPost_postNotFound_throwsException() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            UUID nonExistentId = UUID.randomUUID();
+            when(postRepository.existsById(nonExistentId)).thenReturn(false);
+
+            // Act & Assert
+            assertThatThrownBy(() -> postService.getCommentsForPost(nonExistentId, pageable, testUserId))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Post not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("updatePost()")
+    class UpdatePostTests {
+
+        @Test
+        @DisplayName("should update subject only")
+        void updatePost_subjectOnly_updatesSubject() {
+            // Arrange
+            when(postRepository.findById(testPostId)).thenReturn(Optional.of(testPost));
+            when(postRepository.save(any(Post.class))).thenAnswer(inv -> inv.getArgument(0));
+            // Setup minimal mocks for mapping (updatePost passes null for currentUserId)
+            when(postLikeRepository.countLikesByPostIds(any())).thenReturn(Collections.emptyList());
+            when(bookmarkService.fetchBookmarkCounts(any())).thenReturn(Collections.emptyMap());
+            when(postRepository.countCommentsByParentIds(any())).thenReturn(Collections.emptyList());
+
+            at.fhtw.webenprjbackend.dto.PostUpdateRequest request =
+                    new at.fhtw.webenprjbackend.dto.PostUpdateRequest();
+            request.setSubject("newsubject");
+
+            // Act
+            PostResponse result = postService.updatePost(testPostId, request);
+
+            // Assert
+            assertThat(result).isNotNull();
+            verify(postRepository).save(argThat(post -> post.getSubject().equals("newsubject")));
+        }
+
+        @Test
+        @DisplayName("should update content only")
+        void updatePost_contentOnly_updatesContent() {
+            // Arrange
+            when(postRepository.findById(testPostId)).thenReturn(Optional.of(testPost));
+            when(postRepository.save(any(Post.class))).thenAnswer(inv -> inv.getArgument(0));
+            // Setup minimal mocks for mapping (updatePost passes null for currentUserId)
+            when(postLikeRepository.countLikesByPostIds(any())).thenReturn(Collections.emptyList());
+            when(bookmarkService.fetchBookmarkCounts(any())).thenReturn(Collections.emptyMap());
+            when(postRepository.countCommentsByParentIds(any())).thenReturn(Collections.emptyList());
+
+            at.fhtw.webenprjbackend.dto.PostUpdateRequest request =
+                    new at.fhtw.webenprjbackend.dto.PostUpdateRequest();
+            request.setContent("Updated content here");
+
+            // Act
+            PostResponse result = postService.updatePost(testPostId, request);
+
+            // Assert
+            assertThat(result).isNotNull();
+            verify(postRepository).save(argThat(post -> post.getContent().equals("Updated content here")));
+        }
+
+        @Test
+        @DisplayName("should throw exception when post not found")
+        void updatePost_notFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            when(postRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            at.fhtw.webenprjbackend.dto.PostUpdateRequest request =
+                    new at.fhtw.webenprjbackend.dto.PostUpdateRequest();
+            request.setSubject("test");
+
+            // Act & Assert
+            assertThatThrownBy(() -> postService.updatePost(nonExistentId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Post not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("searchBySubject()")
+    class SearchBySubjectTests {
+
+        @Test
+        @DisplayName("should find posts by subject")
+        void searchBySubject_found_returnsPosts() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Post> posts = List.of(testPost);
+            Page<Post> postPage = new PageImpl<>(posts, pageable, 1);
+
+            when(postRepository.findByParentIsNullAndActiveTrueAndSubjectIgnoreCase("webdev", pageable))
+                    .thenReturn(postPage);
+            setupMocksForMapping(posts);
+
+            // Act
+            Page<PostResponse> result = postService.searchBySubject("webdev", pageable, testUserId);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("should normalize subject with hashtag")
+        void searchBySubject_withHashtag_normalizesSubject() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Post> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+            when(postRepository.findByParentIsNullAndActiveTrueAndSubjectIgnoreCase("java", pageable))
+                    .thenReturn(emptyPage);
+
+            // Act
+            postService.searchBySubject("#java", pageable, testUserId);
+
+            // Assert - verify # was stripped
+            verify(postRepository).findByParentIsNullAndActiveTrueAndSubjectIgnoreCase("java", pageable);
+        }
+    }
+
+    @Nested
+    @DisplayName("getPostsByAuthor()")
+    class GetPostsByAuthorTests {
+
+        @Test
+        @DisplayName("should return posts by author")
+        void getPostsByAuthor_found_returnsPosts() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Post> posts = List.of(testPost);
+            Page<Post> postPage = new PageImpl<>(posts, pageable, 1);
+
+            when(postRepository.findByParentIsNullAndActiveTrueAndUserIdOrderByCreatedAtDesc(testUserId, pageable))
+                    .thenReturn(postPage);
+            setupMocksForMapping(posts);
+
+            // Act
+            Page<PostResponse> result = postService.getPostsByAuthor(testUserId, pageable, testUserId);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("should return empty when author has no posts")
+        void getPostsByAuthor_noPosts_returnsEmpty() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            UUID authorId = UUID.randomUUID();
+            Page<Post> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+            when(postRepository.findByParentIsNullAndActiveTrueAndUserIdOrderByCreatedAtDesc(authorId, pageable))
+                    .thenReturn(emptyPage);
+
+            // Act
+            Page<PostResponse> result = postService.getPostsByAuthor(authorId, pageable, testUserId);
+
+            // Assert
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("getAvailableSubjects()")
+    class GetAvailableSubjectsTests {
+
+        @Test
+        @DisplayName("should return subjects with hashtag prefix")
+        void getAvailableSubjects_returnsWithHashtags() {
+            // Arrange
+            when(postRepository.findDistinctSubjects()).thenReturn(List.of("java", "spring", "webdev"));
+
+            // Act
+            List<String> result = postService.getAvailableSubjects();
+
+            // Assert
+            assertThat(result).containsExactly("#java", "#spring", "#webdev");
+        }
+
+        @Test
+        @DisplayName("should return empty list when no subjects")
+        void getAvailableSubjects_empty_returnsEmpty() {
+            // Arrange
+            when(postRepository.findDistinctSubjects()).thenReturn(Collections.emptyList());
+
+            // Act
+            List<String> result = postService.getAvailableSubjects();
+
+            // Assert
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("hasUserPostedToday()")
+    class HasUserPostedTodayTests {
+
+        @Test
+        @DisplayName("should return true when user posted today")
+        void hasUserPostedToday_posted_returnsTrue() {
+            // Arrange
+            when(postRepository.existsByUserIdAndParentIsNullAndActiveTrueAndCreatedAtGreaterThanEqual(
+                    eq(testUserId), any())).thenReturn(true);
+
+            // Act
+            boolean result = postService.hasUserPostedToday(testUserId);
+
+            // Assert
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return false when user has not posted today")
+        void hasUserPostedToday_notPosted_returnsFalse() {
+            // Arrange
+            when(postRepository.existsByUserIdAndParentIsNullAndActiveTrueAndCreatedAtGreaterThanEqual(
+                    eq(testUserId), any())).thenReturn(false);
+
+            // Act
+            boolean result = postService.hasUserPostedToday(testUserId);
+
+            // Assert
+            assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("getUserActivity()")
+    class GetUserActivityTests {
+
+        @Test
+        @DisplayName("should return all user activity")
+        void getUserActivity_returnsPostsAndComments() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Post> posts = List.of(testPost);
+            Page<Post> postPage = new PageImpl<>(posts, pageable, 1);
+
+            when(postRepository.findByUserIdAndActiveTrueOrderByCreatedAtDesc(testUserId, pageable))
+                    .thenReturn(postPage);
+            setupMocksForMapping(posts);
+
+            // Act
+            Page<PostResponse> result = postService.getUserActivity(testUserId, pageable, testUserId);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("getPostCount()")
+    class GetPostCountTests {
+
+        @Test
+        @DisplayName("should return total post count")
+        void getPostCount_returnsCount() {
+            // Arrange
+            when(postRepository.count()).thenReturn(42L);
+
+            // Act
+            long result = postService.getPostCount();
+
+            // Assert
+            assertThat(result).isEqualTo(42L);
+        }
+    }
 }

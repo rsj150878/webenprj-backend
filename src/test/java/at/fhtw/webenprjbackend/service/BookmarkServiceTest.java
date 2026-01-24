@@ -376,6 +376,217 @@ class BookmarkServiceTest {
     }
 
     @Nested
+    @DisplayName("getCollectionBookmarks()")
+    class GetCollectionBookmarksTests {
+
+        @Test
+        @DisplayName("should return bookmarks for collection")
+        void getCollectionBookmarks_success() {
+            UUID collectionId = UUID.randomUUID();
+            BookmarkCollection collection = new BookmarkCollection(testUser, "My Collection", null, null, null);
+            setField(collection, "id", collectionId);
+
+            PostBookmark bookmark = new PostBookmark(testUser, testPost, collection, "Notes");
+            setField(bookmark, "id", UUID.randomUUID());
+            setField(bookmark, "createdAt", LocalDateTime.now());
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<PostBookmark> bookmarkPage = new PageImpl<>(List.of(bookmark), pageable, 1);
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
+            when(bookmarkRepository.findByUserAndCollectionOrderByCreatedAtDesc(testUser, collection, pageable))
+                    .thenReturn(bookmarkPage);
+
+            Page<BookmarkResponse> result = bookmarkService.getCollectionBookmarks(collectionId, userId, pageable);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("should throw exception when collection not found")
+        void getCollectionBookmarks_collectionNotFound_throwsException() {
+            UUID collectionId = UUID.randomUUID();
+            Pageable pageable = PageRequest.of(0, 10);
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> bookmarkService.getCollectionBookmarks(collectionId, userId, pageable))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Collection not found");
+        }
+
+        @Test
+        @DisplayName("should throw exception when accessing another user's collection")
+        void getCollectionBookmarks_notOwner_throwsException() {
+            UUID collectionId = UUID.randomUUID();
+            User otherUser = createTestUser(UUID.randomUUID(), "other", "other@example.com");
+            BookmarkCollection collection = new BookmarkCollection(otherUser, "Other's Collection", null, null, null);
+            setField(collection, "id", collectionId);
+
+            Pageable pageable = PageRequest.of(0, 10);
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
+
+            assertThatThrownBy(() -> bookmarkService.getCollectionBookmarks(collectionId, userId, pageable))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Cannot access another user's collection");
+        }
+    }
+
+    @Nested
+    @DisplayName("getUncategorizedBookmarks()")
+    class GetUncategorizedBookmarksTests {
+
+        @Test
+        @DisplayName("should return uncategorized bookmarks")
+        void getUncategorizedBookmarks_success() {
+            PostBookmark bookmark = new PostBookmark(testUser, testPost, null, "Notes");
+            setField(bookmark, "id", UUID.randomUUID());
+            setField(bookmark, "createdAt", LocalDateTime.now());
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<PostBookmark> bookmarkPage = new PageImpl<>(List.of(bookmark), pageable, 1);
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+            when(bookmarkRepository.findByUserAndCollectionIsNullOrderByCreatedAtDesc(testUser, pageable))
+                    .thenReturn(bookmarkPage);
+
+            Page<BookmarkResponse> result = bookmarkService.getUncategorizedBookmarks(userId, pageable);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("should return empty page when no uncategorized bookmarks")
+        void getUncategorizedBookmarks_empty() {
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<PostBookmark> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+            when(bookmarkRepository.findByUserAndCollectionIsNullOrderByCreatedAtDesc(testUser, pageable))
+                    .thenReturn(emptyPage);
+
+            Page<BookmarkResponse> result = bookmarkService.getUncategorizedBookmarks(userId, pageable);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void getUncategorizedBookmarks_userNotFound_throwsException() {
+            Pageable pageable = PageRequest.of(0, 10);
+
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> bookmarkService.getUncategorizedBookmarks(userId, pageable))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("updateCollection()")
+    class UpdateCollectionTests {
+
+        @Test
+        @DisplayName("should update collection successfully")
+        void updateCollection_success() {
+            UUID collectionId = UUID.randomUUID();
+            BookmarkCollection collection = new BookmarkCollection(testUser, "Old Name", "Old Desc", "#000000", "old-icon");
+            setField(collection, "id", collectionId);
+            setField(collection, "createdAt", LocalDateTime.now());
+
+            CollectionCreateRequest request = new CollectionCreateRequest("New Name", "New Desc", "#FF0000", "new-icon");
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
+            when(collectionRepository.findByUserAndName(testUser, "New Name")).thenReturn(Optional.empty());
+            when(collectionRepository.save(any(BookmarkCollection.class))).thenReturn(collection);
+            when(bookmarkRepository.countByCollection(collection)).thenReturn(0L);
+
+            BookmarkCollectionResponse result = bookmarkService.updateCollection(collectionId, userId, request);
+
+            assertThat(result).isNotNull();
+            verify(collectionRepository).save(collection);
+        }
+
+        @Test
+        @DisplayName("should allow updating with same name")
+        void updateCollection_sameName_success() {
+            UUID collectionId = UUID.randomUUID();
+            BookmarkCollection collection = new BookmarkCollection(testUser, "My Collection", "Old Desc", "#000000", "old-icon");
+            setField(collection, "id", collectionId);
+            setField(collection, "createdAt", LocalDateTime.now());
+
+            CollectionCreateRequest request = new CollectionCreateRequest("My Collection", "New Desc", "#FF0000", "new-icon");
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
+            when(collectionRepository.findByUserAndName(testUser, "My Collection")).thenReturn(Optional.of(collection));
+            when(collectionRepository.save(any(BookmarkCollection.class))).thenReturn(collection);
+            when(bookmarkRepository.countByCollection(collection)).thenReturn(0L);
+
+            BookmarkCollectionResponse result = bookmarkService.updateCollection(collectionId, userId, request);
+
+            assertThat(result).isNotNull();
+            verify(collectionRepository).save(collection);
+        }
+
+        @Test
+        @DisplayName("should throw exception when collection not found")
+        void updateCollection_notFound_throwsException() {
+            UUID collectionId = UUID.randomUUID();
+            CollectionCreateRequest request = new CollectionCreateRequest("New Name", null, null, null);
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> bookmarkService.updateCollection(collectionId, userId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Collection not found");
+        }
+
+        @Test
+        @DisplayName("should throw exception when updating another user's collection")
+        void updateCollection_forbidden_throwsException() {
+            UUID collectionId = UUID.randomUUID();
+            User otherUser = createTestUser(UUID.randomUUID(), "other", "other@example.com");
+            BookmarkCollection collection = new BookmarkCollection(otherUser, "Other's Collection", null, null, null);
+            setField(collection, "id", collectionId);
+
+            CollectionCreateRequest request = new CollectionCreateRequest("New Name", null, null, null);
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
+
+            assertThatThrownBy(() -> bookmarkService.updateCollection(collectionId, userId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Cannot update another user's collection");
+        }
+
+        @Test
+        @DisplayName("should throw exception when name already exists for another collection")
+        void updateCollection_nameConflict_throwsException() {
+            UUID collectionId = UUID.randomUUID();
+            UUID existingCollectionId = UUID.randomUUID();
+
+            BookmarkCollection collection = new BookmarkCollection(testUser, "My Collection", null, null, null);
+            setField(collection, "id", collectionId);
+
+            BookmarkCollection existingCollection = new BookmarkCollection(testUser, "Existing Name", null, null, null);
+            setField(existingCollection, "id", existingCollectionId);
+
+            CollectionCreateRequest request = new CollectionCreateRequest("Existing Name", null, null, null);
+
+            when(collectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
+            when(collectionRepository.findByUserAndName(testUser, "Existing Name")).thenReturn(Optional.of(existingCollection));
+
+            assertThatThrownBy(() -> bookmarkService.updateCollection(collectionId, userId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Collection with this name already exists");
+        }
+    }
+
+    @Nested
     @DisplayName("fetchBookmarkCounts()")
     class FetchBookmarkCountsTests {
 

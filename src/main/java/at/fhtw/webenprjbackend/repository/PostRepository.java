@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import at.fhtw.webenprjbackend.entity.Post;
 import at.fhtw.webenprjbackend.entity.User;
+import org.springframework.data.jpa.repository.Modifying;
 
 /**
  * Repository interface for Post entity operations.
@@ -106,5 +107,66 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
      */
     @Query("SELECT DISTINCT p.subject FROM Post p WHERE p.parent IS NULL AND p.active = true ORDER BY p.subject")
     List<String> findDistinctSubjects();
+
+    // ========== Admin statistics ==========
+
+    /**
+     * Count all top-level posts (excluding comments).
+     */
+    long countByParentIsNull();
+
+    /**
+     * Count active top-level posts.
+     */
+    long countByParentIsNullAndActiveTrue();
+
+    /**
+     * Count all comments (posts with parent).
+     */
+    long countByParentIsNotNull();
+
+    /**
+     * Count active comments.
+     */
+    long countByParentIsNotNullAndActiveTrue();
+
+    // ========== Admin listing with filters ==========
+
+    /**
+     * Find all posts (including inactive) for admin, ordered by creation time desc.
+     */
+    @Query("SELECT p FROM Post p ORDER BY p.createdAt DESC")
+    Page<Post> findAllForAdmin(Pageable pageable);
+
+    /**
+     * Find posts filtered by active status.
+     */
+    Page<Post> findByActiveOrderByCreatedAtDesc(boolean active, Pageable pageable);
+
+    /**
+     * Find top-level posts only (for admin).
+     */
+    Page<Post> findByParentIsNullOrderByCreatedAtDesc(Pageable pageable);
+
+    /**
+     * Find comments only (for admin).
+     */
+    Page<Post> findByParentIsNotNullOrderByCreatedAtDesc(Pageable pageable);
+
+    /**
+     * Find top-level posts filtered by active status.
+     */
+    Page<Post> findByParentIsNullAndActiveOrderByCreatedAtDesc(boolean active, Pageable pageable);
+
+    /**
+     * Find comments filtered by active status.
+     */
+    Page<Post> findByParentIsNotNullAndActiveOrderByCreatedAtDesc(boolean active, Pageable pageable);
+
+    /**
+     * Search all posts by content (for admin).
+     */
+    @Query("SELECT p FROM Post p WHERE LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.subject) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
+    Page<Post> searchAllForAdmin(@Param("keyword") String keyword, Pageable pageable);
 
 }
