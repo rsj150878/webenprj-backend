@@ -272,5 +272,159 @@ class BookmarkControllerIntegrationTest {
                             .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isNotFound());
         }
+
+        @Test
+        @DisplayName("should return 204 when deleting existing collection")
+        void deleteCollection_exists_returns204() throws Exception {
+            // Create collection first
+            CollectionCreateRequest request = new CollectionCreateRequest("ToDelete", null, null, null);
+            String response = mockMvc.perform(post("/bookmarks/collections")
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse().getContentAsString();
+
+            String collectionId = objectMapper.readTree(response).get("id").asText();
+
+            // Delete it
+            mockMvc.perform(delete("/bookmarks/collections/" + collectionId)
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isNoContent());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /bookmarks/posts/{postId}")
+    class UpdateBookmarkTests {
+
+        @Test
+        @DisplayName("should return 200 when updating bookmark notes")
+        void updateBookmark_success_returns200() throws Exception {
+            // Create bookmark first
+            mockMvc.perform(post("/bookmarks/posts/" + testPost.getId())
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isCreated());
+
+            // Update it
+            at.fhtw.webenprjbackend.dto.BookmarkRequest updateRequest =
+                    new at.fhtw.webenprjbackend.dto.BookmarkRequest(null, "Updated notes");
+
+            mockMvc.perform(put("/bookmarks/posts/" + testPost.getId())
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.notes").value("Updated notes"));
+        }
+
+        @Test
+        @DisplayName("should return 404 when updating non-existent bookmark")
+        void updateBookmark_notFound_returns404() throws Exception {
+            at.fhtw.webenprjbackend.dto.BookmarkRequest updateRequest =
+                    new at.fhtw.webenprjbackend.dto.BookmarkRequest(null, "Notes");
+
+            mockMvc.perform(put("/bookmarks/posts/" + testPost.getId())
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /bookmarks/uncategorized")
+    class GetUncategorizedBookmarksTests {
+
+        @Test
+        @DisplayName("should return 200 with uncategorized bookmarks")
+        void getUncategorized_success_returns200() throws Exception {
+            // Create a bookmark without collection
+            mockMvc.perform(post("/bookmarks/posts/" + testPost.getId())
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isCreated());
+
+            // Get uncategorized
+            mockMvc.perform(get("/bookmarks/uncategorized")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /bookmarks/collections/{id}")
+    class GetCollectionBookmarksTests {
+
+        @Test
+        @DisplayName("should return 404 for non-existent collection")
+        void getCollectionBookmarks_notFound_returns404() throws Exception {
+            mockMvc.perform(get("/bookmarks/collections/" + UUID.randomUUID())
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("should return 200 with bookmarks for existing collection")
+        void getCollectionBookmarks_success_returns200() throws Exception {
+            // Create collection first
+            CollectionCreateRequest request = new CollectionCreateRequest("TestCol", null, null, null);
+            String response = mockMvc.perform(post("/bookmarks/collections")
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse().getContentAsString();
+
+            String collectionId = objectMapper.readTree(response).get("id").asText();
+
+            // Get collection bookmarks
+            mockMvc.perform(get("/bookmarks/collections/" + collectionId)
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /bookmarks/collections/{id}")
+    class UpdateCollectionTests {
+
+        @Test
+        @DisplayName("should return 200 when updating collection")
+        void updateCollection_success_returns200() throws Exception {
+            // Create collection first
+            CollectionCreateRequest createRequest = new CollectionCreateRequest("Original", null, null, null);
+            String response = mockMvc.perform(post("/bookmarks/collections")
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(createRequest)))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse().getContentAsString();
+
+            String collectionId = objectMapper.readTree(response).get("id").asText();
+
+            // Update it
+            CollectionCreateRequest updateRequest = new CollectionCreateRequest("Updated", "New description", "#FF0000", "star");
+            mockMvc.perform(put("/bookmarks/collections/" + collectionId)
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.name").value("Updated"))
+                    .andExpect(jsonPath("$.description").value("New description"));
+        }
+
+        @Test
+        @DisplayName("should return 404 for non-existent collection")
+        void updateCollection_notFound_returns404() throws Exception {
+            CollectionCreateRequest request = new CollectionCreateRequest("Test", null, null, null);
+
+            mockMvc.perform(put("/bookmarks/collections/" + UUID.randomUUID())
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound());
+        }
     }
 }

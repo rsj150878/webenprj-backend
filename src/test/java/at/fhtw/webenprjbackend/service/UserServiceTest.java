@@ -430,6 +430,42 @@ class UserServiceTest {
                     .isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("Email is already in use");
         }
+
+        @Test
+        @DisplayName("should throw exception when username already in use")
+        void updateProfile_usernameConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "takenuser", "other@example.com");
+            UserProfileUpdateRequest request = new UserProfileUpdateRequest(
+                    "test@example.com", "takenuser", "AT"
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUsername("takenuser")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.updateCurrentUserProfile(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Username is already in use");
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void updateProfile_userNotFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            UserProfileUpdateRequest request = new UserProfileUpdateRequest(
+                    "test@example.com", "testuser", "AT"
+            );
+
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.updateCurrentUserProfile(nonExistentId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
     }
 
     @Nested
@@ -514,6 +550,19 @@ class UserServiceTest {
             assertThat(result).isNotNull();
             verify(userRepository).save(argThat(user ->
                     user.getProfileImageUrl().equals(DEFAULT_PROFILE_IMAGE)));
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void removeAvatar_userNotFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.removeAvatar(nonExistentId))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
         }
     }
 
@@ -624,6 +673,43 @@ class UserServiceTest {
                     .isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("User not found");
         }
+
+        @Test
+        @DisplayName("should throw exception when email conflict in admin update")
+        void adminUpdateUser_emailConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "other", "taken@example.com");
+            AdminUserUpdateRequest request = new AdminUserUpdateRequest(
+                    "taken@example.com", "testuser", "AT", null, null, true
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.adminUpdateUser(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Email is already in use");
+        }
+
+        @Test
+        @DisplayName("should throw exception when username conflict in admin update")
+        void adminUpdateUser_usernameConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "takenuser", "other@example.com");
+            AdminUserUpdateRequest request = new AdminUserUpdateRequest(
+                    "test@example.com", "takenuser", "AT", null, null, true
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUsername("takenuser")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.adminUpdateUser(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Username is already in use");
+        }
     }
 
     @Nested
@@ -658,6 +744,19 @@ class UserServiceTest {
             // Assert
             assertThat(result).isNotNull();
             verify(userRepository).save(argThat(user -> !user.isActive()));
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void adminToggleActive_notFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.adminToggleActive(nonExistentId, true))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
         }
     }
 

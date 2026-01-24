@@ -393,5 +393,138 @@ class UserControllerIntegrationTest {
                             .header("Authorization", "Bearer " + userToken))
                     .andExpect(status().isForbidden());
         }
+
+        @Test
+        @DisplayName("should search users by username")
+        void searchUsers_byUsername_returns200() throws Exception {
+            mockMvc.perform(get("/users")
+                            .param("search", "test")
+                            .header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray());
+        }
+
+        @Test
+        @DisplayName("should update user as admin")
+        void adminUpdateUser_validData_returns200() throws Exception {
+            at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest request =
+                    new at.fhtw.webenprjbackend.dto.AdminUserUpdateRequest(
+                            "updated.admin@example.com",
+                            "updatedbyadin",
+                            "DE",
+                            null,
+                            Role.USER,
+                            true
+                    );
+
+            mockMvc.perform(put("/users/" + testUser.getId())
+                            .header("Authorization", "Bearer " + adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.username").value("updatedbyadin"));
+        }
+
+        @Test
+        @DisplayName("should remove user avatar as admin")
+        void adminRemoveAvatar_asAdmin_returns204() throws Exception {
+            mockMvc.perform(delete("/users/" + testUser.getId() + "/avatar")
+                            .header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isNoContent());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /users/me/activity (Activity Status)")
+    class GetActivityStatusTests {
+
+        @Test
+        @DisplayName("should return activity status for authenticated user")
+        void getActivityStatus_authenticated_returns200() throws Exception {
+            mockMvc.perform(get("/users/me/activity")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.hasPostedToday").exists());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /users/me/posts (User Posts)")
+    class GetMyPostsTests {
+
+        @Test
+        @DisplayName("should return empty page when user has no posts")
+        void getMyPosts_noPosts_returnsEmptyPage() throws Exception {
+            mockMvc.perform(get("/users/me/posts")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content").isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("PATCH /users/me/email (Change Email)")
+    class ChangeEmailTests {
+
+        @Test
+        @DisplayName("should return 200 when changing email with valid data")
+        void changeEmail_validData_returns200() throws Exception {
+            CredentialChangeRequests.EmailChange request = new CredentialChangeRequests.EmailChange(
+                    "newemail@example.com",
+                    TEST_PASSWORD
+            );
+
+            mockMvc.perform(patch("/users/me/email")
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.user.email").value("newemail@example.com"))
+                    .andExpect(jsonPath("$.token").exists());
+        }
+
+        @Test
+        @DisplayName("should return 400 when current password is incorrect")
+        void changeEmail_wrongPassword_returns400() throws Exception {
+            CredentialChangeRequests.EmailChange request = new CredentialChangeRequests.EmailChange(
+                    "newemail@example.com",
+                    "WrongPassword123!"
+            );
+
+            mockMvc.perform(patch("/users/me/email")
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("should return 409 when new email already exists")
+        void changeEmail_emailExists_returns409() throws Exception {
+            CredentialChangeRequests.EmailChange request = new CredentialChangeRequests.EmailChange(
+                    "admin@example.com", // existing email
+                    TEST_PASSWORD
+            );
+
+            mockMvc.perform(patch("/users/me/email")
+                            .header("Authorization", "Bearer " + userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isConflict());
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /users/me/avatar (Remove Avatar)")
+    class RemoveAvatarTests {
+
+        @Test
+        @DisplayName("should return 204 when removing avatar")
+        void removeAvatar_authenticated_returns204() throws Exception {
+            mockMvc.perform(delete("/users/me/avatar")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isNoContent());
+        }
     }
 }

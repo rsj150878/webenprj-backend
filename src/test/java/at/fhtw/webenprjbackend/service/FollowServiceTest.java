@@ -251,4 +251,54 @@ class FollowServiceTest {
             assertThat(count).isEqualTo(5L);
         }
     }
+
+    @Nested
+    @DisplayName("isFollowing()")
+    class IsFollowingTests {
+
+        @Test
+        @DisplayName("should return true when following")
+        void isFollowing_true() {
+            when(userRepository.findById(followerId)).thenReturn(Optional.of(follower));
+            when(userRepository.findById(followedId)).thenReturn(Optional.of(followed));
+            when(followRepository.existsByFollowerAndFollowed(follower, followed)).thenReturn(true);
+
+            boolean result = followService.isFollowing(followerId, followedId);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return false when not following")
+        void isFollowing_false() {
+            when(userRepository.findById(followerId)).thenReturn(Optional.of(follower));
+            when(userRepository.findById(followedId)).thenReturn(Optional.of(followed));
+            when(followRepository.existsByFollowerAndFollowed(follower, followed)).thenReturn(false);
+
+            boolean result = followService.isFollowing(followerId, followedId);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("should return false when follower not found")
+        void isFollowing_followerNotFound_returnsFalse() {
+            when(userRepository.findById(followerId)).thenReturn(Optional.empty());
+
+            boolean result = followService.isFollowing(followerId, followedId);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("should return false when followed not found")
+        void isFollowing_followedNotFound_returnsFalse() {
+            when(userRepository.findById(followerId)).thenReturn(Optional.of(follower));
+            when(userRepository.findById(followedId)).thenReturn(Optional.empty());
+
+            boolean result = followService.isFollowing(followerId, followedId);
+
+            assertThat(result).isFalse();
+        }
+    }
 }
