@@ -23,9 +23,7 @@ public class LoginResponse {
     )
     private final UserResponse user;
 
-    // ===============================
     // Constructor
-    // ===============================
     
     /**
      * Creates a login response with token and user data
@@ -37,9 +35,7 @@ public class LoginResponse {
         this.user = user;
     }
 
-    // ===============================
     // Getters
-    // ===============================
     
     public String getToken() {
         return token;
@@ -49,9 +45,6 @@ public class LoginResponse {
         return user;
     }
 
-    // ===============================
-    // Utility Methods
-    // ===============================
 
     /**
      * Checks if the response contains valid authentication data
@@ -78,9 +71,6 @@ public class LoginResponse {
         return user != null ? user.id() : null;
     }
 
-    // ===============================
-    // Object Methods
-    // ===============================
     
     @Override
     public String toString() {

@@ -23,18 +23,15 @@ public class PostAccessPermission implements AccessPermission {
     }
 
     @Override
-    public boolean hasPermission(Authentication authentication, UUID resourceId) {
+    public boolean hasPermission(Authentication authentication, UUID resourceId, String permission) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
-        // Admin may access all posts
         if (principal.hasRole("ADMIN")) {
             return true;
         }
 
         Post post = postRepository.findById(resourceId)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found")
-                );
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
         return post.getUser().getId().equals(principal.getId());
     }

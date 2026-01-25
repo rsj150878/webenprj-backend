@@ -36,20 +36,18 @@ public class PostUpdateRequest {
 
     @Size(max = 500, message = "Image URL cannot exceed 500 characters")
     @Pattern(
-        regexp = "^(https?://).*\\.(jpg|jpeg|png|gif|webp)$",
-        message = "Must be a valid HTTP(S) URL ending with jpg, jpeg, png, gif, or webp",
+        regexp = "^(https?://.*\\.(jpg|jpeg|png|gif|webp|avif)|/medias/[a-fA-F0-9\\-]{36})$",
+        message = "Must be a valid HTTP(S) URL ending with image extension or internal media path (/medias/{uuid})",
         flags = Pattern.Flag.CASE_INSENSITIVE
     )
     @Schema(
-        description = "Updated image URL to accompany the post (study screenshots, diagrams, etc.)", 
-        example = "https://example.com/images/updated-spring-diagram.png",
+        description = "Updated image URL (external HTTP(S) or internal /medias/{uuid} path)",
+        example = "/medias/550e8400-e29b-41d4-a716-446655440000",
         nullable = true
     )
     private String imageUrl;
 
-    // ===============================
     // Constructors
-    // ===============================
 
     /**
      * Default constructor for Jackson deserialization
@@ -78,9 +76,7 @@ public class PostUpdateRequest {
         this.imageUrl = imageUrl;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
 
     public String getSubject() {
         return subject;

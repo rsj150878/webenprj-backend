@@ -93,4 +93,12 @@ public class FollowService {
     public long followingCount(User user) {
         return followRepository.countByFollower(user);
     }
+
+    // check if follower is following followed
+    public boolean isFollowing(UUID followerId, UUID followedId) {
+        User follower = userRepository.findById(followerId).orElse(null);
+        User followed = userRepository.findById(followedId).orElse(null);
+        if (follower == null || followed == null) return false;
+        return followRepository.existsByFollowerAndFollowed(follower, followed);
+    }
 }

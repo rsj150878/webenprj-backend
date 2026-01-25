@@ -1,8 +1,6 @@
 package at.fhtw.webenprjbackend.service;
 
-import at.fhtw.webenprjbackend.dto.CredentialChangeRequests;
-import at.fhtw.webenprjbackend.dto.UserRegistrationRequest;
-import at.fhtw.webenprjbackend.dto.UserResponse;
+import at.fhtw.webenprjbackend.dto.*;
 import at.fhtw.webenprjbackend.entity.Role;
 import at.fhtw.webenprjbackend.entity.User;
 import at.fhtw.webenprjbackend.repository.FollowRepository;
@@ -15,10 +13,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -319,6 +323,480 @@ class UserServiceTest {
                     .hasMessageContaining("User not found");
 
             verify(userRepository, never()).deleteById(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("getCurrentUser()")
+    class GetCurrentUserTests {
+
+        @Test
+        @DisplayName("should return current user")
+        void getCurrentUser_returnsUser() {
+            // Arrange
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(followRepository.countByFollowed(testUser)).thenReturn(5L);
+            when(followRepository.countByFollower(testUser)).thenReturn(3L);
+
+            // Act
+            UserResponse result = userService.getCurrentUser(testUserId);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.username()).isEqualTo("testuser");
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void getCurrentUser_notFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.getCurrentUser(nonExistentId))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("updateCurrentUserProfile()")
+    class UpdateCurrentUserProfileTests {
+
+        @Test
+        @DisplayName("should update profile without credential change")
+        void updateProfile_noCredentialChange_returnsWithoutToken() {
+            // Arrange
+            UserProfileUpdateRequest request = new UserProfileUpdateRequest(
+                    "test@example.com", "testuser", "DE"
+            );
+            request.setSalutation("Prof.");
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenReturn(testUser);
+            when(followRepository.countByFollowed(any())).thenReturn(0L);
+            when(followRepository.countByFollower(any())).thenReturn(0L);
+
+            // Act
+            ProfileUpdateResponse result = userService.updateCurrentUserProfile(testUserId, request);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.isCredentialsChanged()).isFalse();
+        }
+
+        @Test
+        @DisplayName("should issue new token when credentials change")
+        void updateProfile_credentialChange_returnsWithToken() {
+            // Arrange
+            UserProfileUpdateRequest request = new UserProfileUpdateRequest(
+                    "newemail@example.com", "testuser", "AT"
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("newemail@example.com")).thenReturn(Optional.empty());
+            when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenReturn(testUser);
+            when(followRepository.countByFollowed(any())).thenReturn(0L);
+            when(followRepository.countByFollower(any())).thenReturn(0L);
+            when(tokenIssuer.issue(any(), anyString(), anyString())).thenReturn("newToken");
+
+            // Act
+            ProfileUpdateResponse result = userService.updateCurrentUserProfile(testUserId, request);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.isCredentialsChanged()).isTrue();
+            assertThat(result.getToken()).isEqualTo("newToken");
+        }
+
+        @Test
+        @DisplayName("should throw exception when email already in use")
+        void updateProfile_emailConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "other", "other@example.com");
+            UserProfileUpdateRequest request = new UserProfileUpdateRequest(
+                    "other@example.com", "testuser", "AT"
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("other@example.com")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.updateCurrentUserProfile(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Email is already in use");
+        }
+
+        @Test
+        @DisplayName("should throw exception when username already in use")
+        void updateProfile_usernameConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "takenuser", "other@example.com");
+            UserProfileUpdateRequest request = new UserProfileUpdateRequest(
+                    "test@example.com", "takenuser", "AT"
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUsername("takenuser")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.updateCurrentUserProfile(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Username is already in use");
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void updateProfile_userNotFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            UserProfileUpdateRequest request = new UserProfileUpdateRequest(
+                    "test@example.com", "testuser", "AT"
+            );
+
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.updateCurrentUserProfile(nonExistentId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("changeEmail()")
+    class ChangeEmailTests {
+
+        @Test
+        @DisplayName("should change email successfully")
+        void changeEmail_success_returnsWithNewToken() {
+            // Arrange
+            CredentialChangeRequests.EmailChange request =
+                    new CredentialChangeRequests.EmailChange("newemail@example.com", "hashedPassword");
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("hashedPassword", "hashedPassword")).thenReturn(true);
+            when(userRepository.findByEmail("newemail@example.com")).thenReturn(Optional.empty());
+            when(userRepository.save(any(User.class))).thenReturn(testUser);
+            when(followRepository.countByFollowed(any())).thenReturn(0L);
+            when(followRepository.countByFollower(any())).thenReturn(0L);
+            when(tokenIssuer.issue(any(), anyString(), anyString())).thenReturn("newToken");
+
+            // Act
+            ProfileUpdateResponse result = userService.changeEmail(testUserId, request);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.isCredentialsChanged()).isTrue();
+        }
+
+        @Test
+        @DisplayName("should throw exception when password is incorrect")
+        void changeEmail_wrongPassword_throwsException() {
+            // Arrange
+            CredentialChangeRequests.EmailChange request =
+                    new CredentialChangeRequests.EmailChange("newemail@example.com", "wrongPassword");
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("wrongPassword", "hashedPassword")).thenReturn(false);
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.changeEmail(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Current password is incorrect");
+        }
+
+        @Test
+        @DisplayName("should throw exception when email already in use")
+        void changeEmail_emailConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "other", "taken@example.com");
+            CredentialChangeRequests.EmailChange request =
+                    new CredentialChangeRequests.EmailChange("taken@example.com", "hashedPassword");
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("hashedPassword", "hashedPassword")).thenReturn(true);
+            when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.changeEmail(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Email is already in use");
+        }
+    }
+
+    @Nested
+    @DisplayName("removeAvatar()")
+    class RemoveAvatarTests {
+
+        @Test
+        @DisplayName("should reset avatar to default")
+        void removeAvatar_success() {
+            // Arrange
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(followRepository.countByFollowed(any())).thenReturn(0L);
+            when(followRepository.countByFollower(any())).thenReturn(0L);
+
+            // Act
+            ProfileUpdateResponse result = userService.removeAvatar(testUserId);
+
+            // Assert
+            assertThat(result).isNotNull();
+            verify(userRepository).save(argThat(user ->
+                    user.getProfileImageUrl().equals(DEFAULT_PROFILE_IMAGE)));
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void removeAvatar_userNotFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.removeAvatar(nonExistentId))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("getAllUsers()")
+    class GetAllUsersTests {
+
+        @Test
+        @DisplayName("should return paginated users")
+        void getAllUsers_returnsPaginatedUsers() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<User> userPage = new PageImpl<>(List.of(testUser), pageable, 1);
+
+            when(userRepository.findAll(pageable)).thenReturn(userPage);
+            when(followRepository.getFollowerCountsMap(any())).thenReturn(Map.of());
+            when(followRepository.getFollowingCountsMap(any())).thenReturn(Map.of());
+
+            // Act
+            Page<UserResponse> result = userService.getAllUsers(pageable);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("getUserCount()")
+    class GetUserCountTests {
+
+        @Test
+        @DisplayName("should return total user count")
+        void getUserCount_returnsCount() {
+            // Arrange
+            when(userRepository.count()).thenReturn(100L);
+
+            // Act
+            long result = userService.getUserCount();
+
+            // Assert
+            assertThat(result).isEqualTo(100L);
+        }
+    }
+
+    @Nested
+    @DisplayName("adminGetAllUsers()")
+    class AdminGetAllUsersTests {
+
+        @Test
+        @DisplayName("should return admin user page")
+        void adminGetAllUsers_returnsAdminUserPage() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<User> userPage = new PageImpl<>(List.of(testUser), pageable, 1);
+
+            when(userRepository.findAll(pageable)).thenReturn(userPage);
+
+            // Act
+            Page<AdminUserResponse> result = userService.adminGetAllUsers(pageable);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("adminUpdateUser()")
+    class AdminUpdateUserTests {
+
+        @Test
+        @DisplayName("should update user successfully")
+        void adminUpdateUser_success() {
+            // Arrange
+            AdminUserUpdateRequest request = new AdminUserUpdateRequest(
+                    "updated@example.com", "updateduser", "DE", null, Role.ADMIN, true
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("updated@example.com")).thenReturn(Optional.empty());
+            when(userRepository.findByUsername("updateduser")).thenReturn(Optional.empty());
+            when(userRepository.save(any(User.class))).thenReturn(testUser);
+            when(followRepository.countByFollowed(any())).thenReturn(0L);
+            when(followRepository.countByFollower(any())).thenReturn(0L);
+
+            // Act
+            UserResponse result = userService.adminUpdateUser(testUserId, request);
+
+            // Assert
+            assertThat(result).isNotNull();
+            verify(userRepository).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void adminUpdateUser_notFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            AdminUserUpdateRequest request = new AdminUserUpdateRequest(
+                    "test@example.com", "testuser", "AT", null, null, true
+            );
+
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.adminUpdateUser(nonExistentId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
+
+        @Test
+        @DisplayName("should throw exception when email conflict in admin update")
+        void adminUpdateUser_emailConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "other", "taken@example.com");
+            AdminUserUpdateRequest request = new AdminUserUpdateRequest(
+                    "taken@example.com", "testuser", "AT", null, null, true
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.adminUpdateUser(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Email is already in use");
+        }
+
+        @Test
+        @DisplayName("should throw exception when username conflict in admin update")
+        void adminUpdateUser_usernameConflict_throwsException() {
+            // Arrange
+            User otherUser = createTestUser(UUID.randomUUID(), "takenuser", "other@example.com");
+            AdminUserUpdateRequest request = new AdminUserUpdateRequest(
+                    "test@example.com", "takenuser", "AT", null, null, true
+            );
+
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+            when(userRepository.findByUsername("takenuser")).thenReturn(Optional.of(otherUser));
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.adminUpdateUser(testUserId, request))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Username is already in use");
+        }
+    }
+
+    @Nested
+    @DisplayName("adminToggleActive()")
+    class AdminToggleActiveTests {
+
+        @Test
+        @DisplayName("should activate user")
+        void adminToggleActive_activate_success() {
+            // Arrange
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            // Act
+            AdminUserResponse result = userService.adminToggleActive(testUserId, true);
+
+            // Assert
+            assertThat(result).isNotNull();
+            verify(userRepository).save(argThat(User::isActive));
+        }
+
+        @Test
+        @DisplayName("should deactivate user")
+        void adminToggleActive_deactivate_success() {
+            // Arrange
+            when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            // Act
+            AdminUserResponse result = userService.adminToggleActive(testUserId, false);
+
+            // Assert
+            assertThat(result).isNotNull();
+            verify(userRepository).save(argThat(user -> !user.isActive()));
+        }
+
+        @Test
+        @DisplayName("should throw exception when user not found")
+        void adminToggleActive_notFound_throwsException() {
+            // Arrange
+            UUID nonExistentId = UUID.randomUUID();
+            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> userService.adminToggleActive(nonExistentId, true))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("User not found");
+        }
+    }
+
+    @Nested
+    @DisplayName("adminSearchUsers()")
+    class AdminSearchUsersTests {
+
+        @Test
+        @DisplayName("should search users by query")
+        void adminSearchUsers_withQuery_returnsMatches() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<User> userPage = new PageImpl<>(List.of(testUser), pageable, 1);
+
+            when(userRepository.findByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrCountryCodeContainingIgnoreCase(
+                    "test", "test", "test", pageable)).thenReturn(userPage);
+
+            // Act
+            Page<AdminUserResponse> result = userService.adminSearchUsers("test", pageable);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("should return all users when query is blank")
+        void adminSearchUsers_blankQuery_returnsAll() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<User> userPage = new PageImpl<>(List.of(testUser), pageable, 1);
+
+            when(userRepository.findAll(pageable)).thenReturn(userPage);
+
+            // Act
+            Page<AdminUserResponse> result = userService.adminSearchUsers("   ", pageable);
+
+            // Assert
+            assertThat(result).isNotNull();
+            verify(userRepository).findAll(pageable);
         }
     }
 }

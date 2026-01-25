@@ -38,8 +38,8 @@ public class PostCreateRequest {
 
     @Size(max = 500, message = "Image URL cannot exceed 500 characters")
     @Pattern(
-        regexp = "^(https?://.*\\.(jpg|jpeg|png|gif|webp)|/medias/[a-fA-F0-9\\-]{36})$",
-        message = "Must be a valid HTTP(S) URL ending with image extension (jpg, jpeg, png, gif, webp) or internal media path (/medias/{uuid})",
+        regexp = "^(https?://.*\\.(jpg|jpeg|png|gif|webp|avif)|/medias/[a-fA-F0-9\\-]{36})$",
+        message = "Must be a valid HTTP(S) URL ending with image extension (jpg, jpeg, png, gif, webp, avif) or internal media path (/medias/{uuid})",
         flags = Pattern.Flag.CASE_INSENSITIVE
     )
     @Schema(
@@ -58,9 +58,7 @@ public class PostCreateRequest {
 
     // Note: userId is extracted from JWT token in the controller, not sent in request body
 
-    // ===============================
     // Constructors
-    // ===============================
 
     /**
      * Default constructor for Jackson deserialization
@@ -89,9 +87,7 @@ public class PostCreateRequest {
         this.imageUrl = imageUrl;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
 
     public String getSubject() {
         return subject;
@@ -125,9 +121,6 @@ public class PostCreateRequest {
         this.parentId = parentId;
     }
 
-    // ===============================
-    // Utility Methods
-    // ===============================
 
     /**
      * Checks if the post has an associated image
@@ -154,9 +147,6 @@ public class PostCreateRequest {
         return content != null && content.trim().length() >= 5;
     }
 
-    // ===============================
-    // Object Methods
-    // ===============================
 
     @Override
     public String toString() {

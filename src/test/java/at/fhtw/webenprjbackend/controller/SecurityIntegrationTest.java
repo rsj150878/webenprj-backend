@@ -2,7 +2,7 @@ package at.fhtw.webenprjbackend.controller;
 
 import at.fhtw.webenprjbackend.entity.Role;
 import at.fhtw.webenprjbackend.entity.User;
-import at.fhtw.webenprjbackend.repository.UserRepository;
+import at.fhtw.webenprjbackend.repository.*;
 import at.fhtw.webenprjbackend.security.jwt.TokenIssuer;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -44,6 +44,18 @@ class SecurityIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private PostLikeRepository postLikeRepository;
+
+    @Autowired
+    private PostBookmarkRepository postBookmarkRepository;
+
+    @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -59,6 +71,11 @@ class SecurityIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        // Clean up in order of foreign key dependencies
+        postBookmarkRepository.deleteAll();
+        postLikeRepository.deleteAll();
+        followRepository.deleteAll();
+        postRepository.deleteAll();
         userRepository.deleteAll();
 
         regularUser = new User(

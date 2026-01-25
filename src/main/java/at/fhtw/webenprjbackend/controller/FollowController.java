@@ -1,5 +1,6 @@
 package at.fhtw.webenprjbackend.controller;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -83,5 +84,19 @@ public class FollowController {
             @RequestParam(defaultValue = "20") @Positive @Max(100) int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(followService.getFollowing(id, pageable));
+    }
+
+    @GetMapping("/following-status")
+    @Operation(summary = "Check if current user follows this user", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Returns follow status"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated")
+    })
+    public ResponseEntity<Map<String, Boolean>> isFollowing(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        UUID currentUserId = ((UserPrincipal) authentication.getPrincipal()).getId();
+        boolean following = followService.isFollowing(currentUserId, id);
+        return ResponseEntity.ok(Map.of("following", following));
     }
 }

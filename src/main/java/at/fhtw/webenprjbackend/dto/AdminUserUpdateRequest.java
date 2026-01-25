@@ -72,9 +72,7 @@ public class AdminUserUpdateRequest {
     )
     private boolean active;
 
-    // ===============================
     // Constructors
-    // ===============================
 
     /**
      * Default constructor for Jackson deserialization
@@ -100,9 +98,7 @@ public class AdminUserUpdateRequest {
         this.active = active;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
 
     public String getEmail() { 
         return email; 
@@ -152,9 +148,6 @@ public class AdminUserUpdateRequest {
         this.active = active; 
     }
 
-    // ===============================
-    // Object Methods
-    // ===============================
 
     @Override
     public String toString() {

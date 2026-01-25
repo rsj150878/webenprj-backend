@@ -30,9 +30,7 @@ public class LoginRequest {
     )
     private String password;
 
-    // ===============================
     // Constructors
-    // ===============================
     
     /**
      * Default constructor for Jackson deserialization
@@ -49,9 +47,7 @@ public class LoginRequest {
         this.password = password;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
     
     public String getLogin() {
         return login;
@@ -69,9 +65,6 @@ public class LoginRequest {
         this.password = password;
     }
 
-    // ===============================
-    // Utility Methods
-    // ===============================
 
     /**
      * Determines if the login identifier appears to be an email address
@@ -81,9 +74,6 @@ public class LoginRequest {
         return login != null && login.contains("@");
     }
 
-    // ===============================
-    // Object Methods
-    // ===============================
     
     @Override
     public String toString() {

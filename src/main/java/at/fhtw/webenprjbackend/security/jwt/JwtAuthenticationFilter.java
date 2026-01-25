@@ -61,6 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (JwtException | org.springframework.security.core.userdetails.UsernameNotFoundException e) {
+            // invalid/expired token or user deleted - just clear auth and continue
             logger.error("Cannot set user authentication: " + e.getMessage(), e);
             SecurityContextHolder.clearContext();
         }

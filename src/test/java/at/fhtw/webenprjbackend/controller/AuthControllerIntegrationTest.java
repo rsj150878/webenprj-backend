@@ -3,7 +3,7 @@ package at.fhtw.webenprjbackend.controller;
 import at.fhtw.webenprjbackend.dto.LoginRequest;
 import at.fhtw.webenprjbackend.entity.Role;
 import at.fhtw.webenprjbackend.entity.User;
-import at.fhtw.webenprjbackend.repository.UserRepository;
+import at.fhtw.webenprjbackend.repository.*;
 import at.fhtw.webenprjbackend.security.ratelimit.RateLimitingFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +43,18 @@ class AuthControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private PostLikeRepository postLikeRepository;
+
+    @Autowired
+    private PostBookmarkRepository postBookmarkRepository;
+
+    @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -55,6 +67,11 @@ class AuthControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         rateLimitingFilter.clearAttempts();
+        // Clean up in order of foreign key dependencies
+        postBookmarkRepository.deleteAll();
+        postLikeRepository.deleteAll();
+        followRepository.deleteAll();
+        postRepository.deleteAll();
         userRepository.deleteAll();
 
         User testUser = new User(

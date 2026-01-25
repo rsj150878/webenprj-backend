@@ -32,7 +32,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/medias")
-@Tag(name = "Media", description = "File upload and download operations with security validation")
+@Tag(name = "Media", description = "File upload (secured) and media download (public for frontend rendering)")
 public class MediaController {
 
     private final Logger log = LoggerFactory.getLogger(MediaController.class);
@@ -106,9 +106,10 @@ public class MediaController {
 
     @GetMapping("/{id}")
     @Operation(
-            summary = "Retrieve a file",
-            description = "Download a previously uploaded file by its ID. Requires authentication. Accessible by any authenticated user (for profile pictures, post images, etc.).",
-            security = @SecurityRequirement(name = "bearerAuth")
+            summary = "Get media by id (public)",
+            description = "Public endpoint to render images/files in the frontend. "
+                    + "Write operations (upload/delete) remain protected. "
+                    + "Media IDs are UUIDs and are not listed for anonymous users."
     )
     @ApiResponses(value = {
             @ApiResponse(

@@ -15,8 +15,8 @@ public class FileUploadValidator {
 
     // Allowed file extensions (case-insensitive)
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            "jpg", "jpeg", "png", "gif",  // images
-            "pdf"                         // documents
+            "jpg", "jpeg", "png", "gif", "webp", "avif",  // images
+            "pdf"                                          // documents
     );
 
     // Allowed MIME types
@@ -24,11 +24,13 @@ public class FileUploadValidator {
             "image/jpeg",
             "image/png",
             "image/gif",
+            "image/webp",
+            "image/avif",
             "application/pdf"
     );
 
-    // Maximum file size: 10 MB
-    private static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+    // max 25 MB - large enough for PDFs
+    private static final long MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
     public void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -124,6 +126,7 @@ public class FileUploadValidator {
             );
         }
 
+        // strip charset param if present (e.g. "text/plain; charset=utf-8")
         String normalizedMimeType = mimeType.split(";")[0].trim().toLowerCase();
 
         if (!ALLOWED_MIME_TYPES.contains(normalizedMimeType)) {

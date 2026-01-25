@@ -65,6 +65,7 @@ public class SecurityConfiguration {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
+                // no sessions - we use JWT
                 .sessionManagement(session -> session
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -75,7 +76,9 @@ public class SecurityConfiguration {
                     auth
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users/count").permitAll();
+                        .requestMatchers(HttpMethod.GET, "/users/count").permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/medias/**").permitAll();
 
                     if (isDevelopmentMode) {
                         auth
@@ -90,7 +93,7 @@ public class SecurityConfiguration {
         // Security Headers Configuration
         configureSecurityHeaders(http, isDevelopmentMode);
 
-        // Add rate limiting filter first (before JWT auth)
+        // rate limit first, then jwt - order matters here
         http.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -100,6 +103,7 @@ public class SecurityConfiguration {
     private void configureSecurityHeaders(HttpSecurity http, boolean isDevelopmentMode) throws Exception {
         http.headers(headers -> {
             if (isDevelopmentMode) {
+                // h2 console uses iframes
                 headers.frameOptions(frameOptions -> frameOptions.sameOrigin());
             } else {
                 headers.frameOptions(frameOptions -> frameOptions.deny());

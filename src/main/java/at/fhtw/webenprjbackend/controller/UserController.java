@@ -49,13 +49,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 /**
- * REST Controller for comprehensive user management in the Motivise platform.
- * Provides public registration, self-service profile management, and administrative user operations.
- * 
- * Features:
- * - Public user registration
- * - Self-service profile management (view, update, password change)
- * - Administrative user management (CRUD operations, search, activation)
+ * User management endpoints: registration, profile updates, and admin operations.
  */
 @RestController
 @RequestMapping("/users")
@@ -68,19 +62,10 @@ public class UserController {
     private final UserService userService;
     private final PostService postService;
 
-    /**
-     * Constructor for dependency injection
-     * @param userService Service layer for user operations
-     * @param postService Service layer for post operations
-     */
     public UserController(UserService userService, PostService postService) {
         this.userService = userService;
         this.postService = postService;
     }
-
-    // ===============================
-    // Public Endpoints - Registration
-    // ===============================
 
     @PostMapping
     @Operation(
@@ -142,9 +127,6 @@ public class UserController {
         return ResponseEntity.ok(java.util.Map.of("count", count));
     }
 
-    // ===============================
-    // Self-Service Endpoints - Profile Management
-    // ===============================
 
     @GetMapping("/me")
     @Operation(
@@ -350,27 +332,20 @@ public class UserController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200",
-            description = "Avatar removed successfully. Returns updated profile.",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                schema = @Schema(implementation = ProfileUpdateResponse.class)
-            )
+            responseCode = "204",
+            description = "Avatar removed successfully"
         ),
         @ApiResponse(
             responseCode = "401",
             description = "Authentication required"
         )
     })
-    public ResponseEntity<ProfileUpdateResponse> removeAvatar(Authentication authentication) {
+    public ResponseEntity<Void> removeAvatar(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        ProfileUpdateResponse response = userService.removeAvatar(principal.getId());
-        return ResponseEntity.ok(response);
+        userService.removeAvatar(principal.getId());
+        return ResponseEntity.noContent().build();
     }
 
-    // ===============================
-    // Admin Endpoints - User Management
-    // ===============================
 
     @GetMapping
     @Operation(
@@ -575,12 +550,8 @@ public class UserController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "200",
-            description = "Avatar removed successfully. Returns updated user.",
-            content = @Content(
-                mediaType = MEDIA_TYPE_JSON,
-                schema = @Schema(implementation = AdminUserResponse.class)
-            )
+            responseCode = "204",
+            description = "Avatar removed successfully"
         ),
         @ApiResponse(
             responseCode = "404",
@@ -592,11 +563,11 @@ public class UserController {
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AdminUserResponse> adminRemoveUserAvatar(
+    public ResponseEntity<Void> adminRemoveUserAvatar(
             @Parameter(description = "User UUID", required = true)
             @PathVariable UUID id) {
 
-        AdminUserResponse updated = userService.adminRemoveAvatar(id);
-        return ResponseEntity.ok(updated);
+        userService.adminRemoveAvatar(id);
+        return ResponseEntity.noContent().build();
     }
 }

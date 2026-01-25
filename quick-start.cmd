@@ -1,102 +1,27 @@
 @echo off
-echo.
-echo ===============================
-echo   QUICK START MODE (H2)
-echo   No Docker Required
-echo ===============================
-echo.
-echo NOTE: This uses H2 in-memory database for rapid development.
-echo For production-like environment, use 'start.cmd' instead.
-echo.
 
 if "%1"=="clean" (
-    echo Cleaning and starting H2 environment...
+    echo Cleaning...
     call mvnw.cmd clean compile -DskipTests
-    echo Clean build completed!
-    echo.
-    pause
-    goto :end
+    if errorlevel 1 exit /b 1
 )
 
 if "%1"=="info" (
-    goto :info
+    echo.
+    echo Server:     http://localhost:8081
+    echo Swagger:    http://localhost:8081/swagger-ui/index.html
+    echo H2 Console: http://localhost:8081/h2-console (sa / empty password)
+    echo JDBC URL:   jdbc:h2:mem:motivise_dev
+    echo.
+    echo Test logins:
+    echo   anna.schmidt@example.com / Password123!
+    echo   max.meier@example.com / Password123!
+    echo   admin@motivise.app / AdminPass456!
+    exit /b 0
 )
 
-if "%1"=="help" (
-    goto :help
-)
-
-echo Starting H2 development server (no Docker dependencies)...
-echo.
-echo Features enabled:
-echo - H2 in-memory database
-echo - Mock file storage (no MinIO)
-echo - Test data pre-loaded
-echo - Full API documentation
-echo - Zero Docker dependencies
-echo.
-echo TIP: Run 'quick-start.cmd info' to see URLs
-echo.
 set SPRING_PROFILES_ACTIVE=docker-free
+if not defined JWT_SECRET_KEY set JWT_SECRET_KEY=dev-only-jwt-secret-key-min-32-chars-do-not-use-in-prod
 
-REM Set JWT secret for development (generate your own for production!)
-if not defined JWT_SECRET_KEY (
-    set JWT_SECRET_KEY=dev-only-jwt-secret-key-min-32-chars-do-not-use-in-prod
-)
-
+echo Starting Spring Boot (H2, no Docker)...
 call mvnw.cmd spring-boot:run -Pdocker-free -DskipTests
-goto :end
-
-:info
-echo.
-echo ===============================
-echo   QUICK START DEVELOPMENT URLS
-echo ===============================
-echo Server:           http://localhost:8081
-echo API Docs:         http://localhost:8081/swagger-ui/index.html
-echo H2 Console:       http://localhost:8081/h2-console
-echo   JDBC URL:       jdbc:h2:mem:motivise_dev
-echo   Username:       sa
-echo   Password:       (empty)
-echo Actuator Health:  http://localhost:8081/actuator/health
-echo.
-echo ===============================
-echo   TEST DATA AVAILABLE
-echo ===============================
-echo Users:
-echo   anna.schmidt@example.com / Password123!
-echo   max.meier@example.com / Password123!
-echo   admin@motivise.app / AdminPass456!
-echo.
-echo Posts: Sample study posts pre-loaded
-echo Media: Mock file storage (no actual files)
-echo.
-echo ===============================
-echo   DEVELOPMENT NOTES
-echo ===============================
-echo - In-memory database (no persistence)
-echo - No Docker dependencies required
-echo - Perfect for rapid prototyping
-echo - Data resets on server restart
-echo.
-echo For production-like MySQL environment:
-echo   start.cmd
-echo.
-goto :end
-
-:help
-echo.
-echo Quick Start Commands:
-echo.
-echo   quick-start.cmd       - Start H2 development (no Docker)
-echo   quick-start.cmd clean - Clean build then start
-echo   quick-start.cmd info  - Show URLs and test data
-echo   quick-start.cmd help  - Show this help
-echo.
-echo Alternative modes:
-echo   start.cmd         - Standard Docker/MySQL development
-echo   test.cmd          - Run tests only
-echo   clean-install.cmd - Nuclear recovery option
-echo.
-
-:end

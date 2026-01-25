@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import at.fhtw.webenprjbackend.dto.AdminPostResponse;
+import at.fhtw.webenprjbackend.dto.AdminPostStatsResponse;
 import at.fhtw.webenprjbackend.dto.PostCreateRequest;
 import at.fhtw.webenprjbackend.dto.PostResponse;
 import at.fhtw.webenprjbackend.dto.PostUpdateRequest;
@@ -42,9 +45,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * REST Controller for managing study posts.
- * Handles CRUD operations for posts including creation, reading, updating, and deletion.
- * Also provides search functionality for finding posts by keywords.
+ * Post management endpoints.
  */
 @RestController
 @RequestMapping("/posts")
@@ -56,18 +57,9 @@ public class PostController {
 
     private final PostService postService;
 
-    /**
-     * Constructor for dependency injection
-     * @param postService Service layer for post operations
-     */
     public PostController(PostService postService) {
         this.postService = postService;
     }
-
-
-    // ===============================
-    // GET Operations
-    // ===============================
 
     @GetMapping
     @Operation(
@@ -208,9 +200,7 @@ public class PostController {
         return ResponseEntity.ok(postService.getCommentsForPost(id, pageable, currentUserId));
     }
 
-    // ===============================
     // POST Operations (Create)
-    // ===============================
 
     @PostMapping
     @Operation(
@@ -245,9 +235,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // ===============================
     // PUT Operations (Update)
-    // ===============================
 
     @PutMapping("/{id}")
     @Operation(
@@ -291,9 +279,7 @@ public class PostController {
         return ResponseEntity.ok(updated);
     }
 
-    // ===============================
     // DELETE Operations
-    // ===============================
 
     @DeleteMapping("/{id}")
     @Operation(
@@ -303,19 +289,19 @@ public class PostController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "204", 
+            responseCode = "204",
             description = "Post deleted successfully"
         ),
         @ApiResponse(
-            responseCode = "401", 
+            responseCode = "401",
             description = "Authentication required"
         ),
         @ApiResponse(
-            responseCode = "403", 
+            responseCode = "403",
             description = "Not authorized to delete this post"
         ),
         @ApiResponse(
-            responseCode = "404", 
+            responseCode = "404",
             description = "Post not found"
         )
     })
@@ -325,6 +311,113 @@ public class PostController {
             @PathVariable UUID id) {
 
         postService.deletePost(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @GetMapping("/admin")
+    @Operation(
+        summary = "Get all posts for admin",
+        description = "Retrieve all posts including inactive ones for admin moderation. Supports filtering by status and type.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Posts retrieved successfully",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                array = @ArraySchema(schema = @Schema(implementation = AdminPostResponse.class))
+            )
+        ),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Admin role required")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<AdminPostResponse>> adminGetAllPosts(
+            @Parameter(description = "Filter by active status (null = all)")
+            @RequestParam(required = false) Boolean active,
+            @Parameter(description = "Filter by type: true = comments only, false = posts only, null = all")
+            @RequestParam(required = false) Boolean isComment,
+            @Parameter(description = "Search keyword in content or subject")
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(postService.adminGetAllPosts(active, isComment, search, pageable));
+    }
+
+    @GetMapping("/admin/stats")
+    @Operation(
+        summary = "Get post statistics",
+        description = "Retrieve statistics about posts and comments for admin dashboard.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Statistics retrieved successfully",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                schema = @Schema(implementation = AdminPostStatsResponse.class)
+            )
+        ),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Admin role required")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminPostStatsResponse> adminGetStats() {
+        return ResponseEntity.ok(postService.getAdminPostStats());
+    }
+
+    @PatchMapping("/admin/{id}/active")
+    @Operation(
+        summary = "Toggle post active status",
+        description = "Soft delete or restore a post by setting its active status.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Post status updated successfully",
+            content = @Content(
+                mediaType = MEDIA_TYPE_JSON,
+                schema = @Schema(implementation = AdminPostResponse.class)
+            )
+        ),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Admin role required"),
+        @ApiResponse(responseCode = "404", description = "Post not found")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminPostResponse> adminToggleActive(
+            @Parameter(description = "Post UUID", required = true)
+            @PathVariable UUID id,
+            @Parameter(description = "New active status", required = true)
+            @RequestParam boolean active) {
+
+        return ResponseEntity.ok(postService.adminToggleActive(id, active));
+    }
+
+    @DeleteMapping("/admin/{id}")
+    @Operation(
+        summary = "Permanently delete post",
+        description = "Hard delete a post. This action cannot be undone.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Post permanently deleted"),
+        @ApiResponse(responseCode = "401", description = "Authentication required"),
+        @ApiResponse(responseCode = "403", description = "Admin role required"),
+        @ApiResponse(responseCode = "404", description = "Post not found")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> adminHardDelete(
+            @Parameter(description = "Post UUID to permanently delete", required = true)
+            @PathVariable UUID id) {
+
+        postService.adminHardDeletePost(id);
         return ResponseEntity.noContent().build();
     }
 

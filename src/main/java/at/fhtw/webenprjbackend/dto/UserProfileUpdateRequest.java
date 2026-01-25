@@ -65,9 +65,7 @@ public class UserProfileUpdateRequest {
     )
     private String salutation;
 
-    // ===============================
     // Constructors
-    // ===============================
 
     /**
      * Default constructor for Jackson deserialization
@@ -100,9 +98,7 @@ public class UserProfileUpdateRequest {
         this.profileImageUrl = profileImageUrl;
     }
 
-    // ===============================
     // Getters and Setters
-    // ===============================
 
     public String getEmail() { 
         return email; 
@@ -144,9 +140,6 @@ public class UserProfileUpdateRequest {
         this.salutation = salutation;
     }
 
-    // ===============================
-    // Utility Methods
-    // ===============================
 
     /**
      * Checks if a profile image is being set
@@ -190,9 +183,6 @@ public class UserProfileUpdateRequest {
                countryCode != null && !countryCode.trim().isEmpty();
     }
 
-    // ===============================
-    // Object Methods
-    // ===============================
 
     @Override
     public String toString() {
