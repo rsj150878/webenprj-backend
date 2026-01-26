@@ -72,6 +72,7 @@ public class GlobalExceptionHandler {
         log.info("Validation failed at {}",
                 getPath(request));
 
+     //   System.out.println(ex);
         Map<String, String> fieldErrors = new HashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             fieldErrors.put(error.getField(), error.getDefaultMessage());
